@@ -8,6 +8,8 @@ Parse configuration as with Jackson JSON
 
 #### Context pre-initialization for JavaScript
 
+## Rules of Build-Time Initialization
+
 ## Hidden Dangers of Class Initialization
 ### Security vulnerabilities: crypto keys, build environment, random seeds.
    (VJ)(Algradin) Examples. 
