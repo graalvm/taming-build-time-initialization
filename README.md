@@ -19,7 +19,7 @@ Math.PI
 
 The performance overhead of extra checks becomes particularly obvious in hot code (e.g., tight loops). If the class `Math` is initialized at build-time, the extra check is not necessary and the code will be as performant as when using the JIT compiler.
 
-### Smaller Output Binary
+### Smaller Output Binary and Less Configuration
 
 
 ### Faster Startup via Heap Snapshotting
