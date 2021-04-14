@@ -48,13 +48,23 @@ while without the context stored in the image we have `12,101,651`
 ## Rules of Build-Time Initialization
 
 ## Hidden Dangers of Class Initialization
-### Security vulnerabilities: crypto keys, build environment, random seeds.
-   (VJ)(Algradin) Examples. 
+### Security vulnerabilities: private cryptographic keys, random seeds, etc.
+   (Algradin) Examples. 
+
 ### Changing a class to run-time is a backwards incompatible change
    (VJ) History of a file in Netty
-### Correctness: read a property from a host machine but use it in production. 
+
+### Host machine data leakage
+
+### Correctness: read a property from a host machine but use it in production.
    (INet address)
+
+### Storing Caches Accidentaly in the Image
+   
 ### Cross-Library Boundaries
-   (Netty Find a good issue or Spring)
+   (gradinac) (Netty Find a good issue or Spring)
+   
 ### Initializing run-time classes at build time as a consequence of build-time initialization.
     JSON at build time problem from features and rerun.
+
+### Image Bloating by Using Inadequate Data Structures
