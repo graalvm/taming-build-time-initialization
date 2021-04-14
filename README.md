@@ -68,3 +68,11 @@ while without the context stored in the image we have `12,101,651`
     JSON at build time problem from features and rerun.
 
 ### Image Bloating by Using Inadequate Data Structures
+
+## Build-Time Class Initialization Without Regret
+
+### Rewrite the code so the compiler can prove critical classes
+
+### Hand-pick classes that are important for build-time initialization but can't be proven
+
+## Debugging Class Initialization
