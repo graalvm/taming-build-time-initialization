@@ -30,7 +30,7 @@ Parse configuration as with Jackson JSON
 
 Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the "Hello, World!" in JS more than 50% less expensive. With context pre-intialized we have `5,367,730` instructions executed
 ```
->valgrind --tool=callgrind ../jre/bin/js -e 'print("Hello, World!")'
+$ valgrind --tool=callgrind ../jre/bin/js -e 'print("Hello, World!")'
 ...
 ==1729206==
 ==1729206== I   refs:      5,367,730
@@ -39,7 +39,7 @@ Another good place to use heap snapshotting is pre-initialization of language co
 while without the context stored in the image we have `12,101,651`
 
 ```
->valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
+$ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 ...
 ==1729206==
 ==1729206== I   refs:      12,101,651
@@ -48,16 +48,26 @@ while without the context stored in the image we have `12,101,651`
 ## Rules of Build-Time Initialization
 
 ## Hidden Dangers of Class Initialization
+
 ### Security vulnerabilities: private cryptographic keys, random seeds, etc.
    (Algradin) Examples. 
 
-### Changing a class to run-time is a backwards incompatible change
-   (VJ) History of a file in Netty
-
 ### Host machine data leakage
 
-### Correctness: read a property from a host machine but use it in production.
+### Correctness:
+
+#### Read a property from a host machine but use it in production.
    (INet address)
+   
+#### Regular code changes can cause unintended and unknown correctnes problems
+
+### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
+#### Explicit changes in the config
+  (Netty)(VJ) History of a file in Netty
+
+#### Unintended chages in the code 
+
+
 
 ### Storing Caches Accidentaly in the Image
    
