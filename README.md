@@ -19,11 +19,28 @@ Math.PI
 
 The performance overhead of extra checks becomes particularly obvious in hot code (e.g., tight loops). If the class `Math` is initialized at build-time, the extra check is not necessary and the code will be as performant as when using the JIT compiler.
 
-### Faster startup
+### Faster Startup via Heap Snapshotting
 
 Parse configuration as with Jackson JSON 
 
-#### Context pre-initialization for JavaScript
+#### Context pre-initialization for GraalVM Languages
+
+Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the "Hello, World!" in JS more than 50% less expensive. With context pre-intialized we have `5,367,730` instructions executed
+```
+>valgrind --tool=callgrind ../jre/bin/js -e 'print("Hello, World!")'
+...
+==1729206==
+==1729206== I   refs:      5,367,730
+```
+
+while without the context stored in the image we have `12,101,651`
+
+```
+>valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
+...
+==1729206==
+==1729206== I   refs:      12,101,651
+```
 
 ## Rules of Build-Time Initialization
 
