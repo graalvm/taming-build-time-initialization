@@ -1,6 +1,23 @@
 # Taming Build-Time Initalization in Native Image
 
 ## Why Build-Time Initialization?
+### Better Peak Performance
+
+By the semantics of the Java, access to classes, methods, or fields can cause class initialization. In just-in-time compilers (JIT) this doesn't introduce performance overheads: every class in the compiled code is initialized because the interpreter has already executed it. 
+
+In ahead-of-time compilers such as GraalVM Native Image, class-initialization checks can not be removed as this would break Java semantics. For example, a simple sequence of field accesses will get translated into a check for class initialization and field access, i.e., 
+```
+Math.PI
+```
+will become
+```
+if (!Math.class.isInitialized) {
+  initialize(Math.class)
+}
+Math.PI
+```
+
+The performance overhead of extra checks becomes particularly obvious in hot code (e.g., tight loops). If the class `Math` is initialized at build-time, the extra check is not necessary and the code will be as performant as when using the JIT compiler.
 
 ### Faster startup
 
