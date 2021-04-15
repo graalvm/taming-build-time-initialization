@@ -190,7 +190,18 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 
 #### Crossing the Library Boundaries
 
-Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
+Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries.
+
+Most Java frameworks have the following structure:
+```java
+public class MyBuildTimeInitClass {
+   ...
+   private static final Logger logger = MyFrameworkLogFactory.getLogger(MyBuildTimeInitClass.class);
+   ...
+}
+```
+
+If the underlying logging library is configurable by the user, buildtime initialization of the above class would wrongly initialize any of the selected logging library classes at build time.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Code Compatibility
