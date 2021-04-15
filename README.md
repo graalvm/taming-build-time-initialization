@@ -116,7 +116,7 @@ Run-Time initialized classes must not end up in the image heap.
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Hidden Dangers of Class Initialization
 
-### Security Vulnerabilities: private cryptographic keys, random seeds, etc.
+### Security Vulnerabilities: Cryptographic Keys, Random Seeds, etc.
 
 Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run.
 
@@ -162,8 +162,20 @@ Regardless of where the final image is executed, `USER_HOME` will always contain
 
 ### Correctness
 
-#### Read a property from a host machine but use it in production.
-   (VJ) (INet address static initializer)
+#### Read a Property from the Build Machine and Always use it in Production
+
+Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/net/InetAddress.java#L307) where the IP preference is determined in the class initializer:
+```
+  static {
+     String str = java.security.AccessController.doPrivileged(
+                new GetPropertyAction("java.net.preferIPv6Addresses"));
+        if (str == null) {
+            preferIPv6Address = PREFER_IPV4_VALUE;
+        } else if (str.equalsIgnoreCase("true")) {
+            preferIPv6Address = PREFER_IPV6_VALUE;
+        } else if (str.equalsIgnoreCase("false")) {
+        ...
+```
 
 #### Simple code changes can cause unintended and unknown correctnes problems
    (Example)
