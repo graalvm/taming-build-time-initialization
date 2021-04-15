@@ -90,7 +90,11 @@ In GraalVM Native Image there are three possible initialization states for each 
 The default for GraalVM Native Image is that classes are initialized at run time. However, for performance reasons, Native Image will prove certain classes safe to initialize and will still initialize them.
 
 #### Proving Safe Initialization During Analysis and after Analysis
-Some classes are always safe to be executed during the
+GraalVM Native Image can prove classes safe in two places:
+1. During Analysis - all of the static fields will be folded during analysis and the resulting image size can be smaller. These proofs work on simple class initializers without recursion or cyclic dependencies.
+2. After Analysis - the fields will not have an effect on static analysis.
+
+The best place to see the types of classes that can be proven early is the [test for class initialization](https://github.com/oracle/graal/blob/master/substratevm/src/com.oracle.svm.test/src/com/oracle/svm/test/TestClassInitializationMustBeSafe.java).
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
@@ -107,10 +111,12 @@ Every object can't be stored in the image heap. The major categories of objects 
 
 All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.)
 
+Run-Time initialized classes must not end up in the image heap.
+
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Hidden Dangers of Class Initialization
 
-### Security vulnerabilities: private cryptographic keys, random seeds, etc.
+### Security Vulnerabilities: private cryptographic keys, random seeds, etc.
 
 Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run.
 
@@ -190,6 +196,7 @@ Another consequence is that the image would have to be rebuilt if the underlying
 In the [config-initialization](why-build-time-initialization/config-initialization) example, the size of the image without parsing the data file is 30 MB. Note that the size is a bit larger as we've included the file in the final image as a resource for practical reasons. The config file itself is 15 MB. By parsing the config file at build time and baking it into the image heap we get a 58 MB executable. This translates to a (58 - 30 - 15) MB = 13 MB overhead due to the used data structures that end up in the image heap - that is almost twice the size of the original data file!
 
 ## Build-Time Class Initialization Without Regret
+
 ### Inspecting the Results of Build-Time Initialization
   (vjovanov) -H:+PrintClassInitialization
 ### Rewrite the Code so Native Image can Prove Critical Classes
