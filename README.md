@@ -181,37 +181,29 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 
 #### Simple Code Changes can Cause Unintended and Unknown Correctnes Problems
    If anywhere in the code that is reachable from static initializers we introduce reading a system property.
-
-   The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization.
-
+   
+   The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization. 
+   
    This especially doesn't play well when initialization is crossing the library boundaries.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 #### Crossing the Library Boundaries
 
-Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries.
-
-Most Java frameworks have the following structure:
-```java
-public class MyBuildTimeInitClass {
-   ...
-   private static final Logger logger = MyFrameworkLogFactory.getLogger(MyBuildTimeInitClass.class);
-   ...
-}
-```
-
-If the underlying logging library is configurable by the user, buildtime initialization of the above class would wrongly initialize any of the selected logging library classes at build time.
+Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Code Compatibility
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 #### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
    (VJ) JSON Example
-
+   
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 #### Unintended Chages in the Code Reachable from the Class Initializer
    (VJ)(algradin) example
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 #### Explicit Changes in the Configuration
   (Netty)(VJ) History of a file in Netty
 
@@ -226,10 +218,26 @@ Another consequence is that the image would have to be rebuilt if the underlying
 
 In the [config-initialization](why-build-time-initialization/config-initialization) example, the size of the image without parsing the data file is 30 MB. Note that the size is a bit larger as we've included the file in the final image as a resource for practical reasons. The config file itself is 15 MB. By parsing the config file at build time and baking it into the image heap we get a 58 MB executable. This translates to a (58 - 30 - 15) MB = 13 MB overhead due to the used data structures that end up in the image heap - that is almost twice the size of the original data file!
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Build-Time Class Initialization Without Regret
 
 ### Inspecting the Results of Build-Time Initialization
-  (vjovanov) -H:+PrintClassInitialization
+  To see how and where a class got initialized we introduce a flag `-H:+PrintClassInitialization`. This flag will output for each class where the decision is coming from and why it got initialized. An example of the output is a CSV file show when classes were proven: 
+  ```
+ Class Name, Initialization Kind, Reason for Initialization
+boolean, BUILD_TIME, primitive types are initialized at build time
+boolean[], BUILD_TIME, arrays are initialized at build time
+...
+com.oracle.graal.compiler.enterprise.BulkAllocationSnippetTemplates, BUILD_TIME, Native Image classes are always initialized at build time
+...
+com.oracle.svm.core.heap.Target_jdk_internal_ref_SoftCleanable, BUILD_TIME, substitutions are always initialized at build time
+com.oracle.svm.core.heap.Target_jdk_internal_ref_WeakCleanable, BUILD_TIME, substitutions are always initialized at build time
+...
+io.netty.bootstrap.AbstractBootstrap, BUILD_TIME, from jar:file:///home/parallels/dev/g/ee/vm-enterprise/tests/native-image/netty/hello.world/target/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/common/native-image.properties (with 'io.netty.util.AbstractReferenceCounted') and from jar:file:///home/parallels/dev/g/ee/vm-enterprise/tests/native-image/netty/hello.world/target/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/codec-http/native-image.properties (with 'io.netty')
+...
+sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core.jdk.LocalizationFeature.addBundleToCache with 'class sun.util.resources.cldr.CalendarData'
+  ```
+  
 ### Rewrite the Code so Native Image can Prove Critical Classes
  (vojin) math example from the beginning.
 
