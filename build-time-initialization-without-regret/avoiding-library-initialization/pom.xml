@@ -123,7 +123,6 @@
               <buildArg>--allow-incomplete-classpath</buildArg>
               <buildArg>-H:IncludeResources=logback.xml</buildArg>
               <buildArg>--initialize-at-build-time=org.graalvm.AvoidingLibraryInitialization</buildArg>
-              <buildArg>-H:Num</buildArg>
             </buildArgs>
             <mainClass>org.graalvm.AvoidingLibraryInitialization</mainClass>
           </configuration>
