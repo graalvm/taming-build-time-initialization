@@ -35,8 +35,13 @@ Netty is currently initialized at build time. In the past this has caused many i
 
 ### Faster Startup via Heap Snapshotting
 
-When a class is initialized at image build time its static fields are saved to the image heap in the generated executable. When the application starts up, this saved heap is mapped into memory. This can be (ab)used to, for example, parse and load a configuration or static data at image build time.
-In the `config-initialization` example, a big list of (fake!) employee accounts in the `JSON` format is parsed in the static initializer of `ConfigExample`. By initializing this class at build time, we avoid the overhead of parsing this configuration file at runtime.
+When a class is initialized at image build time its static fields are saved to the image heap in the generated executable. When the application starts up, this saved heap is mapped into memory.
+
+#### Parse Configuration at Build Time
+
+Heap snapshotting can be used to, for example, parse and load a configuration or static data at image build time.
+
+In the [config-initialization](why-build-time-initialization/config-initialization) example, a big list of (fake!) employee accounts in the `JSON` format is parsed in the static initializer of `ConfigExample`. By initializing this class at build time, we avoid the overhead of parsing this configuration file at runtime.
 
 Data in this sample was generated using https://www.json-generator.com/.
 
@@ -134,3 +139,4 @@ After the change, the code should have equivalent semantics as the original and
 
 ## Debugging Class Initialization
 
+(Algradin) Take the sneaky thread from our example.
