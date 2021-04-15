@@ -17,8 +17,8 @@ Math.PI
 ```
 will become
 ```
-if (!Math.class.isInitialized) {
-  initialize(Math.class)
+if (!Math.class.isInitialized) { // Native Image intrinsic
+  initialize(Math.class)         // invocation to an intrinsic function
 }
 Math.PI
 ```
