@@ -177,6 +177,8 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
         ...
 ```
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
 #### Simple code changes can cause unintended and unknown correctnes problems
    If anywhere in the code that is reachable from static initializers we introduce reading a system property.
    
