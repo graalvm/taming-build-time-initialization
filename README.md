@@ -243,9 +243,27 @@ sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core
 
 ### Hand-Pick Classes Important for Build-Time Initialization
 
+A common problem in making a class safer for build-time initialization is logging. In the [avoiding-library-initialization](build-time-initialization-without-regret/avoiding-library-initialization) example, `AvoidingLibraryInitialization` could be initialized at build-time if it did not have a static logger.
+
+To work around this, we refactor the logger creation to a utility method:
+```java
+    private static Logger getLogger() {
+        if ("buildtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            return NOPLogger.NOP_LOGGER;
+        } else {
+            return LoggerFactory.getLogger(AvoidingLibraryInitialization.class);
+        }
+    }
+```
+
+During image build-time, calls to `getLogger` will return a no-op logger and avoid initializing (and subesequently, configuring) logging at build-time. Native-image exposes the `org.graalvm.nativeimage.imagecode` system property that can contain:
+ - `null`: code is executing on regular Java
+ - `buildtime`: code is executing in the image builder
+ - `runtime`: code is executing in the image, at runtime
+
+In the example, logging is configured using `logback.xml`. Initializing the logger at build-time would also unintentionally initialize XML parsing at build-time, creating an issue if XML is used elsewhere in the code.
+
 (vojin) text and explanation based on PlatformDependent0.
-(vojin) is in image code example
-(algradinac) example with Logger and how to rewrite.
 All of the system properties we expose.
 After the change, the code should have equivalent semantics as the original and
 
