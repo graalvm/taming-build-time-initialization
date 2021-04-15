@@ -81,11 +81,15 @@ In GraalVM Native Image there are three possible initialization states for each 
 2. `RUN_TIME`   - marks that a class is initialized at run-time and all static fields and the class initializer will be evaluted at run time.
 3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time. 
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
 ### Properties of Build-Time Initialized Classes
 
 1. All classes stored in the image heap must be initialized at build time. This is necessary as accessing an object through a virtual method could execute code in that object doesn't have consistent state--static initializer has not been executed.
 2. All super classes, and super interfaces with default methods, of a build-time class must be build-time as well. 
 3. Code reached through the class initializer of a build time class, must be either marked as `BUILD_TIME` or `RERUN`. In the example of [JSON parsing at build time](https://github.com/vjovanov/taming-build-time-initalization/blob/main/why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ConfigExample.java#L20), most of the `jackson` library is initialized at build time.
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Proving a Class is Build-Time Initialized
 
@@ -94,6 +98,8 @@ The default for GraalVM Native Image is that classes are initialized at run time
 #### Proving Safe Initialization During Analysis and after Analysis
 Some classes are always safe to be executed during the 
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
 ### Rules of Heap Snapshotting
 Every object can't be stored in the image heap. The major categories of objects are the ones that keep the state from the build machine: 
 1. Objects containing build-system information, e.g., open files (`java.io.FileDescriptor`).  
@@ -101,15 +107,12 @@ Every object can't be stored in the image heap. The major categories of objects 
 3. Objects pointers to native memory (e.g., `java.nio.MappedByteBuffer`)
 4. Known random seeds (impossible to prove no random seed ends up in the image)
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Properties for Run-Time Classes
 All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.) 
 
-
-
-
-
-
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Hidden Dangers of Class Initialization
 
 ### Security vulnerabilities: private cryptographic keys, random seeds, etc.
