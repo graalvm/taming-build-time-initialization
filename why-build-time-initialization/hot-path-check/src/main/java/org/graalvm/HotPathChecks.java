@@ -1,6 +1,11 @@
 package org.graalvm;
 
 class SlowMath {
+
+    private static class FastSquareRootHolder {
+        static final boolean fastSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
+    }
+
     private static final boolean fastSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
 
     private static boolean useFastSquareRoot() {
