@@ -29,11 +29,11 @@ The code example of a performance critical code where initialization is a proble
 
 ### Smaller Output Binary and Less Configuration
 
-Class initialzers can pull a lot of unnecessary code into the resulting native-image. 
+Class initialzers can pull a lot of unnecessary code into the resulting native-image although they would be functional otherwise. The good example is [netty](https://github.com/netty/netty) where certain classes traverse all methods to just reach a single declaration and store it into the image.
 
 Netty is currently initialized at build time. In the past this has caused many issues with cross-boundary initializations and initializing functionality at build time. 
 
-We made a PR to change initialization of Netty to run time and the results were dissapointing: the simplest Netty application grew from 16 MB to 20 MB in binary size.
+We made a PR to change initialization of Netty to run time and the results were dissapointing: the simplest Netty application grew from 16 MB to 20 MB in binary size. The extra necessary config grew by more than 2x.
 
 ### Faster Startup via Heap Snapshotting
 
