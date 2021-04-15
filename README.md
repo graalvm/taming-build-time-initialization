@@ -179,7 +179,7 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
-#### Simple code changes can cause unintended and unknown correctnes problems
+#### Simple Code Changes can Cause Unintended and Unknown Correctnes Problems
    If anywhere in the code that is reachable from static initializers we introduce reading a system property.
    
    The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization. 
