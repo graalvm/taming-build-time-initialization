@@ -5,6 +5,7 @@
 Make sure to install `maven`, GraalVM and native-image and to put native-image on the PATH.
 Each example can then be compiled using `mvn clean package`. Some examples can also be tweaked and recompiled to show different scenarios.
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Why Build-Time Initialization?
 
 ### Better Peak Performance
@@ -17,8 +18,8 @@ Math.PI
 ```
 will become
 ```
-if (!Math.class.isInitialized) { // Native Image intrinsic
-  initialize(Math.class)         // invocation to an intrinsic function
+if (!Math.class.isInitialized) { // hidden field in Native Image intrinsic
+  initialize(Math.class)         // invocation of an intrinsic function
 }
 Math.PI
 ```
@@ -27,11 +28,15 @@ The performance overhead of extra checks becomes particularly obvious in hot cod
 
 The code example of a performance critical code where initialization is a problem can be found [here](why-build-time-initialization/hot-path-check).
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
 ### Smaller Binary and Less Configuration
 
 Class initialzers can pull a lot of unnecessary code into the resulting native-image although they would be functional otherwise. The good example is [netty](https://github.com/netty/netty) where [certain classes](https://github.com/netty/netty/blob/4.1/buffer/src/main/java/io/netty/buffer/AbstractByteBufAllocator.java#L36) traverse all methods to just reach a single declaration and store it into the image.
 
 Netty is currently initialized at build time. In the past this has caused many issues with cross-boundary initializations and initializing functionality at build time. To address this issue we [made a PR](https://github.com/vjovanov/netty/pull/2/files) to change default initialization of Netty to run time and the results were somewhat dissapointing: the Netty "Hello, World!" application grew from `16 MB` to `20 MB` in binary size. The extra necessary config grew by a large factor--most of the reflection configuration happens in static initializers.
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Faster Startup via Heap Snapshotting
 
@@ -66,6 +71,8 @@ $ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 
 The results are even better for Ruby where we have a reduction from `56 ms` to `14 ms` with the pre-initialized context. 
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
 ## Rules of Build-Time Initialization and Heap Snapshotting
 
 ### Types of Classes in GraalVM Native Image
@@ -99,20 +106,24 @@ Every object can't be stored in the image heap. The major categories of objects 
 All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.) 
 
 
+
+
+
+
 ## Hidden Dangers of Class Initialization
 
 ### Security vulnerabilities: private cryptographic keys, random seeds, etc.
 
 Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run.
-
-#### Read a property from a host machine but use it in production.
-   (INet address)
    
 ### Host Machine Data Leakage
 
 Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field. However, contents of any file or directory structure that is saved into the image heap can fall into this category.
 
 ### Correctness
+
+#### Read a property from a host machine but use it in production.
+   (INet address static initializer)
 
 #### Simple code changes can cause unintended and unknown correctnes problems
 
@@ -136,9 +147,13 @@ Another consequence is that the image would have to be rebuilt if the underlying
 
 ### Image Bloating by Using Inadequate Data Structures
 
+(gradinac) load a concurrent hash map and initialize at build time with a contents of an array of Strings as keys and Integers as values. 
+
 ## Build-Time Class Initialization Without Regret
 
 ### Rewrite the Code so Native Image can Prove Critical Classes
+
+
 
 ### Hand-Pick Classes Important for Build-Time Initialization
 
@@ -151,5 +166,7 @@ All of the system properties we expose.
 After the change, the code should have equivalent semantics as the original and 
 
 ## Debugging Class Initialization
+
+(vjovanov) -H:+PrintClassInitialization
 
 (Algradin) Take the sneaky thread from our example.
