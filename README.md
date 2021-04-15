@@ -114,6 +114,26 @@ All sub-classes of a run-time class (or interface with default methods) must als
 
 Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run.
 
+In the [security-problems](hidden-build-time-initialization-dangers/security-problems) example, the following problematic fields are initialized at build time:
+```java
+public class SecurityProblems {
+   ...
+   // Will "bake" the private key found during the image build into the image!
+   private static final PrivateKey runtimeSuppliedPrivateKey = loadPrivateKey();
+
+   // Will always contain the same random seed at image runtime!
+   private static final SimplePRNG randomNumberGenerator = new SimplePRNG(System.currentTimeMillis());
+   ...
+}
+```
+
+The bytes of the private key will be embedded in the image heap, and while it may take a bit of time to analyze the executable, it is possible to retrieve and compromise it. The simple random number generator will be initialized with a random seed (never use the current time as the random seed in a real app!) at image build time. This seed will not change between subsequent runs:
+```bash
+$ ./target/org.graalvm.securityproblems
+An entirely random sequence: 2843 5686 3435
+$ ./target/org.graalvm.securityproblems
+An entirely random sequence: 2843 5686 3435
+```
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 

@@ -34,3 +34,10 @@ out/
 *.iml
 *.ipr
 *.iws
+
+##############################
+## VSCode
+##############################
+.classpath
+.project
+.settings
