@@ -272,11 +272,12 @@ sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core
   private static class FastSquareRootHolder {
      static final boolean fastSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
   }
+  
+  private static boolean useFastSquareRoot() {
+     return FastSquareRootHolder.fastSquareRoot;
+ }
  ```
- 
- or by moving the property into a static inner class we make our code fast
- 
- a few slight changes we will make it possible to make the `SlowMath` class fast
+ will make the code fast. 
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Hand-Pick Classes Important for Build-Time Initialization
