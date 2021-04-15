@@ -63,24 +63,24 @@ $ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 ==1729206== I   refs:      12,101,651
 ```
 
-The results are even better for Ruby where we have a reduction from `56 ms` to `14 ms` with the pre-initialized context. 
+The results are even better for Ruby where we have a reduction from `56 ms` to `14 ms` with the pre-initialized context.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ## Rules of Build-Time Initialization and Heap Snapshotting
 
 ### Types of Classes in GraalVM Native Image
-In GraalVM Native Image there are three possible initialization states for each class: 
+In GraalVM Native Image there are three possible initialization states for each class:
 1. `BUILD_TIME` - marks that a class is initialized at build-time and all of static fields will be reachable saved in the image heap.
 2. `RUN_TIME`   - marks that a class is initialized at run-time and all static fields and the class initializer will be evaluted at run time.
-3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time. 
+3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Properties of Build-Time Initialized Classes
 
 1. All classes stored in the image heap must be initialized at build time. This is necessary as accessing an object through a virtual method could execute code in that object doesn't have consistent state--static initializer has not been executed.
-2. All super classes, and super interfaces with default methods, of a build-time class must be build-time as well. 
+2. All super classes, and super interfaces with default methods, of a build-time class must be build-time as well.
 3. Code reached through the class initializer of a build time class, must be either marked as `BUILD_TIME` or `RERUN`. In the example of [JSON parsing at build time](https://github.com/vjovanov/taming-build-time-initalization/blob/main/why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ConfigExample.java#L20), most of the `jackson` library is initialized at build time.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
@@ -90,14 +90,14 @@ In GraalVM Native Image there are three possible initialization states for each 
 The default for GraalVM Native Image is that classes are initialized at run time. However, for performance reasons, Native Image will prove certain classes safe to initialize and will still initialize them.
 
 #### Proving Safe Initialization During Analysis and after Analysis
-Some classes are always safe to be executed during the 
+Some classes are always safe to be executed during the
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Limitations of Heap Snapshotting
-Every object can't be stored in the image heap. The major categories of objects are the ones that keep the state from the build machine: 
-1. Objects containing build-system information, e.g., open files (`java.io.FileDescriptor`).  
-2. Objects containing host VM data, e.g., running threads and continuations. 
+Every object can't be stored in the image heap. The major categories of objects are the ones that keep the state from the build machine:
+1. Objects containing build-system information, e.g., open files (`java.io.FileDescriptor`).
+2. Objects containing host VM data, e.g., running threads and continuations.
 3. Objects pointers to native memory (e.g., `java.nio.MappedByteBuffer`)
 4. Known random seeds (impossible to prove no random seed ends up in the image)
 
@@ -105,14 +105,14 @@ Every object can't be stored in the image heap. The major categories of objects 
 
 ### Properties for Run-Time Classes
 
-All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.) 
+All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.)
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Hidden Dangers of Class Initialization
 
 ### Security vulnerabilities: private cryptographic keys, random seeds, etc.
 
-Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run. 
+Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run.
 
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
@@ -130,17 +130,17 @@ Storing paths in static fields of classes initialized at build time can leak inf
 
 #### Simple code changes can cause unintended and unknown correctnes problems
    (Example)
-   
+
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-   
+
 ### Backwards Compatibility
 
 #### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
    (VJ) JSON Example
 
 #### Unintended Chages in the Code Reachable from the Class Initializer
-   (VJ)(algradin) example  
-   
+   (VJ)(algradin) example
+
 #### Explicit Changes in the Configuration
   (Netty)(VJ) History of a file in Netty
 
@@ -150,28 +150,27 @@ Initializing classes at build time in one library can unintentionally ripple and
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Initializing run-time classes at build time as a consequence of build-time initialization.
 
-Parsing the configuration during build time comes with a major caveat: in the `config-initialization` example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in class initialization configuration errors (classes from `jackson` that were supposed to be initialized at runtime got initialized at buildtime).
+Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in class initialization configuration errors (classes from `jackson` that were supposed to be initialized at runtime got initialized at buildtime).
 Another consequence is that the image would have to be rebuilt if the underlying data changes.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Image Bloating by Using Inadequate Data Structures
 
-(gradinac) load a concurrent hash map and initialize at build time with a contents of an array of Strings as keys and Integers as values. 
-
+In the [config-initialization](why-build-time-initialization/config-initialization) example, the size of the image without parsing the data file is 30 MB. Note that the size is a bit larger as we've included the file in the final image as a resource for practical reasons. The config file itself is 15 MB. By parsing the config file at build time and baking it into the image heap we get a 58 MB executable. This translates to a (58 - 30 - 15) MB = 13 MB overhead due to the used data structures that end up in the image heap - that is almost twice the size of the original data file!
 
 ## Build-Time Class Initialization Without Regret
 ### Inspecting the Results of Build-Time Initialization
   (vjovanov) -H:+PrintClassInitialization
 ### Rewrite the Code so Native Image can Prove Critical Classes
- (vojin) math example from the beginning. 
- 
+ (vojin) math example from the beginning.
+
 ### Hand-Pick Classes Important for Build-Time Initialization
 
-(vojin) text and explanation based on PlatformDependent0. 
+(vojin) text and explanation based on PlatformDependent0.
 (vojin) is in image code example
 (algradinac) example with Logger and how to rewrite.
-All of the system properties we expose. 
-After the change, the code should have equivalent semantics as the original and 
+All of the system properties we expose.
+After the change, the code should have equivalent semantics as the original and
 
 ## Debugging Class Initialization
 
