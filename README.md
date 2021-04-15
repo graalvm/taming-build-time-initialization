@@ -34,7 +34,7 @@ Netty is currently initialized at *build time*. In the past this has caused many
 
 ### Faster Startup via Heap Snapshotting
 
-When a class is initialized at image build time its static fields are saved to the image heap in the generated executable. When the application starts up, this saved heap is mapped into memory.
+When a class is initialized at image build time its static fields are saved to the image heap in the generated executable. When the application starts up, this saved heap is mapped into memory with almost no overhead.
 
 #### Parse Configuration at Build Time
 
@@ -44,7 +44,8 @@ In the [config-initialization](why-build-time-initialization/config-initializati
 
 Data in this sample was generated using https://www.json-generator.com/.
 
-#### Context pre-initialization for GraalVM Languages
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+#### Context pre-Initialization for GraalVM Languages
 
 Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the `"Hello, World!"` in JS more than 55% less expensive. With context pre-intialized we have `5,367,730` instructions executed
 ```
@@ -71,15 +72,15 @@ The results are even better for Ruby where we have a reduction from `56 ms` to `
 
 ### Types of Classes in GraalVM Native Image
 In GraalVM Native Image there are three possible initialization states for each class:
-1. `BUILD_TIME` - marks that a class is initialized at build-time and all of static fields that are reachable are saved in the image heap.
-2. `RUN_TIME`   - marks that a class is initialized at run-time and all static fields and the class initializer will be evaluted at run time.
+1. `BUILD_TIME` - marks that a class is initialized at build time and all of static fields that are reachable are saved in the image heap.
+2. `RUN_TIME`   - marks that a class is initialized at run time and all static fields and the class initializer will be evaluted at run time.
 3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Properties of Build-Time Initialized Classes
 
-1. All classes stored in the image heap must be initialized at build time. This is necessary as accessing an object through a virtual method could execute code in that object doesn't have consistent state--static initializer has not been executed.
+1. All classes stored in the image heap must be initialized at build time. This is necessary as accessing an object through a virtual method could execute code in an object doesn't have consistent state--static initializer has not been executed.
 2. All super classes, and super interfaces with default methods, of a build-time class must be build-time as well.
 3. Code reached through the class initializer of a build time class, must be either marked as `BUILD_TIME` or `RERUN`. In the example of [JSON parsing at build time](https://github.com/vjovanov/taming-build-time-initalization/blob/main/why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ConfigExample.java#L20), most of the `jackson` library is initialized at build time.
 
@@ -87,7 +88,7 @@ In GraalVM Native Image there are three possible initialization states for each 
 
 ### Proving a Class is Build-Time Initialized
 
-The default for GraalVM Native Image is that classes are initialized at run time. However, for performance reasons, Native Image will prove certain classes safe to initialize and will still initialize them.
+The **default for GraalVM Native Image** is that classes are initialized at **run time**. However, for performance reasons, Native Image will prove certain classes safe to initialize and will still initialize them.
 
 #### Proving Safe Initialization During Analysis and After Analysis
 GraalVM Native Image can prove classes safe in two places:
@@ -143,7 +144,7 @@ An entirely random sequence: 2843 5686 3435
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
-### Host Machine Data Leakage
+### Host-Machine Data Leakage
 
 Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field. However, contents of any file or directory structure that is saved into the image heap can fall into this category.
 
@@ -176,13 +177,14 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
         } else if (str.equalsIgnoreCase("false")) {
         ...
 ```
+This was initialized at build-time in Native Image that caused a bug.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 #### Simple Code Changes can Cause Unintended and Unknown Correctness Problems
    If anywhere in the code that is reachable from static initializers we introduce reading a system property.
    
-   The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization. 
+   The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/hot-path-check/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization. 
    
    This especially doesn't play well when initialization is crossing the library boundaries.
 
@@ -207,18 +209,21 @@ If the underlying logging library is configurable by the user, buildtime initial
 ### Code Compatibility
 
 #### Making a class intialized at Run Time Stored in the Image Heap
-This can happen accross the library boundaries through values returned by regular functions.
+This can happen accross the library boundaries through values returned by regular functions (possibly written by a thrid party).
 
 #### Changing a Class from Build Time to Run Time is a Backwards Incompatible Change
 
 1. Explicit changes in the configuration. See, for example, the [changes in Netty](https://github.com/netty/netty/blob/4.1/common/src/main/resources/META-INF/native-image/io.netty/common/native-image.properties) that occured over time. Each was a breaking change for the rest of the community.
-2. Adding code that can't be initialized at build-time anymore: e.g. dissallowed heap objects to build-time classes.
+2. Modifying code so that it can't be initialized at build-time anymore: e.g. dissallowed heap objects stored to build-time classes.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization.
 
-Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in class initialization configuration errors (classes from `jackson` that were supposed to be initialized at runtime got initialized at buildtime).
-Another consequence is that the image would have to be rebuilt if the underlying data changes.
+Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in:
+```java
+com.fasterxml.jackson.databind.SerializationConfig was unintentionally initialized at build time. To see why com.fasterxml.jackson.databind.SerializationConfig got initialized use --trace-class-initialization=com.fasterxml.jackson.databind.SerializationConfig
+com.fasterxml.jackson.annotation.JsonSetter$Value was unintentionally initialized at build time. To see why com.fasterxml.jackson.annotation.JsonSetter$Value got initialized use --trace-class-initialization=com.fasterxml.jackson.annotation.JsonSetter$Value
+```
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Image Bloating by Using Inadequate Data Structures
@@ -229,6 +234,8 @@ In the [config-initialization](why-build-time-initialization/config-initializati
  - Size of the data file:                                     15 MB
 -------------------------------------------------------------------
  - Total overhead:                                            13 MB
+
+To fix this it is recommended to use lean data-structures (e.g., `EconomicMap` from Graal or trimmed `ArrayList`s).
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Build-Time Class Initialization Without Regret
