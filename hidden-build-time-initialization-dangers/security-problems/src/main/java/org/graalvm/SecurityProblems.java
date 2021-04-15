@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public class SecurityProblems
 {
-    // Will leak the user home directory of the user building the image!
+    // Will leak the user's home directory of the user building the image!
     private static final String USER_HOME = System.getProperty("user.home");
 
     // Will "bake" the private key found during the image build into the image!
