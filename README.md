@@ -1,11 +1,5 @@
 # Taming Build-Time Initalization in Native Image
 
-## How to run the examples in this repo
-
-Make sure to install `maven`, GraalVM and native-image and to put native-image on the PATH.
-Each example can then be compiled using `mvn clean package`. Some examples can also be tweaked and recompiled to show different scenarios.
-
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Why Build-Time Initialization?
 
 ### Better Peak Performance
