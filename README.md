@@ -28,7 +28,7 @@ The code example of a performance critical code where initialization is a proble
 
 Class initialzers can pull a lot of unnecessary code into the resulting native-image although they would be functional otherwise. The good example is [netty](https://github.com/netty/netty) where [certain classes](https://github.com/netty/netty/blob/4.1/buffer/src/main/java/io/netty/buffer/AbstractByteBufAllocator.java#L36) traverse all methods to just reach a single declaration and store it into the image.
 
-Netty is currently initialized at build time. In the past this has caused many issues with cross-boundary initializations and initializing functionality at build time. To address this issue we [made a PR](https://github.com/vjovanov/netty/pull/2/files) to change default initialization of Netty to run time and the results were somewhat dissapointing: the Netty "Hello, World!" application grew from `16 MB` to `20 MB` in binary size. The extra necessary config grew by a large factor--most of the reflection configuration happens in static initializers.
+Netty is currently initialized at *build time*. In the past this has caused many issues with cross-boundary initializations and initializing functionality at build time. To address this issue we [made a PR](https://github.com/vjovanov/netty/pull/2/files) to change default initialization of Netty to run time and the results were somewhat dissapointing: the Netty `"Hello, World!"` application grew from `16 MB` to `20 MB` in binary size. The extra necessary config grew by more than *5x*--most of the reflection configuration happens in static initializers.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
