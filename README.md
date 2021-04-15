@@ -100,7 +100,7 @@ Some classes are always safe to be executed during the
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
-### Rules of Heap Snapshotting
+### Limitations of Heap Snapshotting
 Every object can't be stored in the image heap. The major categories of objects are the ones that keep the state from the build machine: 
 1. Objects containing build-system information, e.g., open files (`java.io.FileDescriptor`).  
 2. Objects containing host VM data, e.g., running threads and continuations. 
@@ -110,6 +110,7 @@ Every object can't be stored in the image heap. The major categories of objects 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Properties for Run-Time Classes
+
 All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.) 
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
@@ -117,59 +118,67 @@ All sub-classes of a run-time class (or interface with default methods) must als
 
 ### Security vulnerabilities: private cryptographic keys, random seeds, etc.
 
-Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run.
-   
+Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run. 
+
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
 ### Host Machine Data Leakage
 
 Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field. However, contents of any file or directory structure that is saved into the image heap can fall into this category.
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
 ### Correctness
 
 #### Read a property from a host machine but use it in production.
-   (INet address static initializer)
+   (VJ) (INet address static initializer)
 
 #### Simple code changes can cause unintended and unknown correctnes problems
+   (Example)
+   
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+   
+### Backwards Compatibility
 
-### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
-
-#### Explicit changes in the config
-  (Netty)(VJ) History of a file in Netty
+#### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
+   (VJ) JSON Example
 
 #### Unintended Chages in the Code Reachable from the Class Initializer
+   (VJ)(algradin) example  
+   
+#### Explicit Changes in the Configuration
+  (Netty)(VJ) History of a file in Netty
 
-### Storing Caches Accidentaly in the Image
-
-### Crossing the Library Boundaries
-
+#### Crossing the Library Boundaries
 Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Initializing run-time classes at build time as a consequence of build-time initialization.
 
 Parsing the configuration during build time comes with a major caveat: in the `config-initialization` example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in class initialization configuration errors (classes from `jackson` that were supposed to be initialized at runtime got initialized at buildtime).
 Another consequence is that the image would have to be rebuilt if the underlying data changes.
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Image Bloating by Using Inadequate Data Structures
 
 (gradinac) load a concurrent hash map and initialize at build time with a contents of an array of Strings as keys and Integers as values. 
 
+
 ## Build-Time Class Initialization Without Regret
-
+### Inspecting the Results of Build-Time Initialization
+  (vjovanov) -H:+PrintClassInitialization
 ### Rewrite the Code so Native Image can Prove Critical Classes
-
-
-
+ (vojin) math example from the beginning. 
+ 
 ### Hand-Pick Classes Important for Build-Time Initialization
 
-If initializers contain code that is misbehaving: use a the system properties provided by native image to factor that code out.
-
-(TODO) Logger example
-
+(vojin) text and explanation based on PlatformDependent0. 
+(vojin) is in image code example
+(algradinac) example with Logger and how to rewrite.
 All of the system properties we expose. 
-
 After the change, the code should have equivalent semantics as the original and 
 
 ## Debugging Class Initialization
 
-(vjovanov) -H:+PrintClassInitialization
-
-(Algradin) Take the sneaky thread from our example.
+(Algradin) --trace-class-init-test --trace-object-instantation-test
