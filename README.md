@@ -298,4 +298,27 @@ In the example, logging is configured using `logback.xml`. Initializing the logg
 
 ## Debugging Class Initialization
 
-(Algradin) --trace-class-init-test --trace-object-instantation-test
+Two useful options for debugging class initialization problems are:
+ - --trace-class-initialization=<fully-qualified-class-name>
+ - --trace-object-instantiation=<fully-qualified-class-name>
+
+These options instruct the native-image builder to trace initialization/object instantiation of given classes.
+
+If a given class is wrongly initialized at build-time, a trace with the culprit class is printed. In the [class-initialization-tracing](debugging-build-time-initialization/class-initialization-tracing) example, class `A` wrongly initializes class `B` and the tracing gives us:
+```java
+org.graalvm.A caused initialization of this class with the following trace: 
+	at org.graalvm.B.<clinit>(ClassInitializedByAccident.java)
+	at org.graalvm.A.<clinit>(ClassInitializedByAccident.java:10)
+```
+
+If an object of a forbidden class (e.g. java.lang.Thread) is instantiated in the image builder and is reachable at runtime, a trace showing us how the object got instantiated is printed.
+In the [object-instantiation-tracing](debugging-build-time-initialization/object-instantiation-tracing) example, `SneakyRunningThread` starts a thread during the image build. Tracing object instantiaton of `java.lang.Thread` gives us:
+```java
+Error: Detected a started Thread in the image heap. Threads running in the image generator are no longer running at image runtime.  Object has been initialized by the org.graalvm.SneakyRunningThread class initializer with a trace: 
+ 	at java.lang.Thread.<init>(Thread.java:489)
+	at org.graalvm.SneakyRunningThread.<clinit>(SneakyRunningThread.java:7)
+. Try avoiding to initialize the class that caused initialization of the Thread. The object was probably created by a class initializer and is reachable from a static field. You can request class initialization at image runtime by using the option --initialize-at-run-time=<class-name>. Or you can write your own initialization methods and call them explicitly from your main entry point.
+Detailed message:
+Trace: Object was reached by 
+	reading field org.graalvm.SneakyRunningThread.sneakyThread
+```
