@@ -87,22 +87,16 @@ The default for GraalVM Native Image is that classes are initialized at run time
 #### Proving Safe Initialization During Analysis and after Analysis
 Some classes are always safe to be executed during the 
 
-#### Notable excpetions 
-
 ### Rules of Heap Snapshotting
 Every object can't be stored in the image heap. The major categories of objects are the ones that keep the state from the build machine: 
 1. Objects containing build-system information, e.g., open files (`java.io.FileDescriptor`).  
 2. Objects containing host VM data, e.g., running threads and continuations. 
-3. 
+3. Objects pointers to native memory (e.g., `java.nio.MappedByteBuffer`)
 4. Known random seeds (impossible to prove no random seed ends up in the image)
 
-#### All Super Classes of a Build-Time class Must be Build-Time
-
-Notable exceptions are interfaces without default methods. Those are not initialized together with their sub-classes.
-
-#### All Classes of Objects Stored in the Image Heap Must be Build-Time Initialized
 
 ### Properties for Run-Time Classes
+All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.) 
 
 
 ## Hidden Dangers of Class Initialization
