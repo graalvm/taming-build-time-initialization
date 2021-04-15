@@ -67,6 +67,12 @@ The results are even better for Ruby where we have a reduction from `56 ms` to `
 
 ### Properties of Build-Time Classes
 
+### Proving a Class is Build-Time Initialized
+
+#### Proving Safe Initialization During Analysis and after Analysis
+
+(TODO) clinit
+
 #### All Super Classes of a Build-Time class Must be Build-Time
 
 Notable exceptions are interfaces without default methods. Those are not initialized together with their sub-classes.
@@ -117,6 +123,14 @@ Another consequence is that the image would have to be rebuilt if the underlying
 ### Rewrite the Code so Native Image can Prove Critical Classes
 
 ### Hand-Pick Classes Important for Build-Time Initialization
+
+If initializers contain code that is misbehaving: use a the system properties provided by native image to factor that code out.
+
+(TODO) Logger example
+
+All of the system properties we expose. 
+
+After the change, the code should have equivalent semantics as the original and 
 
 ## Debugging Class Initialization
 
