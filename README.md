@@ -71,7 +71,7 @@ The results are even better for Ruby where we have a reduction from `56 ms` to `
 
 ### Types of Classes in GraalVM Native Image
 In GraalVM Native Image there are three possible initialization states for each class:
-1. `BUILD_TIME` - marks that a class is initialized at build-time and all of static fields will be reachable saved in the image heap.
+1. `BUILD_TIME` - marks that a class is initialized at build-time and all of static fields that are reachable are saved in the image heap.
 2. `RUN_TIME`   - marks that a class is initialized at run-time and all static fields and the class initializer will be evaluted at run time.
 3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time.
 
@@ -165,7 +165,7 @@ Regardless of where the final image is executed, `USER_HOME` will always contain
 #### Read a Property from the Build Machine and Always use it in Production
 
 Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/net/InetAddress.java#L307) where the IP preference is determined in the class initializer:
-```
+```java
   static {
      String str = java.security.AccessController.doPrivileged(
                 new GetPropertyAction("java.net.preferIPv6Addresses"));
@@ -179,7 +179,7 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
-#### Simple Code Changes can Cause Unintended and Unknown Correctnes Problems
+#### Simple Code Changes can Cause Unintended and Unknown Correctness Problems
    If anywhere in the code that is reachable from static initializers we introduce reading a system property.
    
    The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization. 
@@ -251,7 +251,25 @@ sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core
 
 Sometimes proofs are impossible (e.g., Netty [PlatformDependent0](https://github.com/netty/netty/blob/4.1/common/src/main/java/io/netty/util/internal/PlatformDependent0.java#L77)) but we still need to initialize this class at build time. 
 
-The soultion is simple, re-write the code of the class so it can be initialized at build-time. For that we can use the system properties injected by GraalVM Native Image.
+The soultion is simple, re-write the code of the class so it can be initialized at build-time. For that we can use the system properties injected by GraalVM Native Image. In the [avoiding-library-initialization](build-time-initialization-without-regret/avoiding-library-initialization) example, `AvoidingLibraryInitialization` could be initialized at build-time if it did not have a static logger.
+
+To work around this, we refactor the logger creation to a utility method:
+```java
+    private static Logger getLogger() {
+        if ("buildtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            return NOPLogger.NOP_LOGGER;
+        } else {
+            return LoggerFactory.getLogger(AvoidingLibraryInitialization.class);
+        }
+    }
+```
+
+During image build-time, calls to `getLogger` will return a no-op logger and avoid initializing (and subesequently, configuring) logging at build-time. Native-image exposes the `org.graalvm.nativeimage.imagecode` system property that can contain:
+ - `null`: code is executing on regular Java
+ - `buildtime`: code is executing in the image builder
+ - `runtime`: code is executing in the image, at runtime
+
+In the example, logging is configured using `logback.xml`. Initializing the logger at build-time would also unintentionally initialize XML parsing at build-time, creating an issue if XML is used elsewhere in the code.
 
 ## Debugging Class Initialization
 
