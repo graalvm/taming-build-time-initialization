@@ -66,7 +66,7 @@ $ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 
 The results are even better for Ruby where we have a reduction from `56 ms` to `14 ms` with the pre-initialized context. 
 
-## Rules of Build-Time Initialization
+## Rules of Build-Time Initialization and Heap Snapshotting
 
 ### Types of Classes in GraalVM Native Image
 In GraalVM Native Image there are three possible initialization states for each class: 
@@ -85,11 +85,17 @@ In GraalVM Native Image there are three possible initialization states for each 
 The default for GraalVM Native Image is that classes are initialized at run time. However, for performance reasons, Native Image will prove certain classes safe to initialize and will still initialize them.
 
 #### Proving Safe Initialization During Analysis and after Analysis
-Examples of obviously safe classes
-
-(TODO) clinit
+Some classes are always safe to be executed during the 
 
 #### Notable excpetions 
+
+### Rules of Heap Snapshotting
+Every object can't be stored in the image heap. The major categories of objects are the ones that keep the state from the build machine: 
+1. Objects containing build-system information, e.g., open files (`java.io.FileDescriptor`).  
+2. Objects containing host VM data, e.g., running threads and continuations. 
+3. 
+4. Known random seeds (impossible to prove no random seed ends up in the image)
+
 #### All Super Classes of a Build-Time class Must be Build-Time
 
 Notable exceptions are interfaces without default methods. Those are not initialized together with their sub-classes.
