@@ -1,2 +1,5 @@
 #! /bin/bash
-mvn exec:java -Dexec.mainClass='org.graalvm.HotPathChecks'
+
+mvn package -Pnative-image -DskipTests
+
+target/org.graalvm.hotpathchecks
