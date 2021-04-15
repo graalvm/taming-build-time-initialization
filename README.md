@@ -25,6 +25,8 @@ Math.PI
 
 The performance overhead of extra checks becomes particularly obvious in hot code (e.g., tight loops). If the class `Math` is initialized at build-time, the extra check is not necessary and the code will be as performant as when using the JIT compiler.
 
+The code example of a performance critical code where initialization is a problem can be found (here)[why-build-time-initialization/hot-path-check].
+
 ### Smaller Output Binary and Less Configuration
 
 Class initialzers can pull a lot of unnecessary code into the resulting native-image. 
