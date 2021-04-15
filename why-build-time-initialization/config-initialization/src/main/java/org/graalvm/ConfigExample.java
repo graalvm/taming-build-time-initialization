@@ -40,6 +40,6 @@ public class ConfigExample
         } else {
             System.out.println("We don't have a best fake employee!");
         }
-        storeEmployeeData("data.json");
+        // storeEmployeeData("data.json");
     }
 }
