@@ -1,8 +1,7 @@
 package org.graalvm;
 
-
 class SlowMath {
-    private static final boolean qSquareRoot = Boolean.getBoolean(System.getProperty("fast.root"));
+    private static final boolean qSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
 
     public static float rsqrt(float x) {
         if (qSquareRoot) {
