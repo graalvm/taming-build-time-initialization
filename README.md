@@ -1,11 +1,16 @@
 # Taming Build-Time Initalization in Native Image
 
+## How to run the examples in this repo
+
+Make sure to install maven, GraalVM and native-image and to put native-image on the PATH.
+Each example can then be compiled using `mvn clean package`. Some examples can also be tweaked and recompiled to show different scenarios.
+
 ## Why Build-Time Initialization?
 ### Better Peak Performance
 
-By the semantics of the Java, access to classes, methods, or fields can cause class initialization. In just-in-time compilers (JIT) this doesn't introduce performance overheads: every class in the compiled code is initialized because the interpreter has already executed it. 
+By the semantics of the Java, access to classes, methods, or fields can cause class initialization. In just-in-time compilers (JIT) this doesn't introduce performance overheads: every class in the compiled code is initialized because the interpreter has already executed it.
 
-In ahead-of-time compilers such as GraalVM Native Image, class-initialization checks can not be removed as this would break Java semantics. For example, a simple sequence of field accesses will get translated into a check for class initialization and field access, i.e., 
+In ahead-of-time compilers such as GraalVM Native Image, class-initialization checks can not be removed as this would break Java semantics. For example, a simple sequence of field accesses will get translated into a check for class initialization and field access, i.e.,
 ```
 Math.PI
 ```
@@ -24,8 +29,10 @@ The performance overhead of extra checks becomes particularly obvious in hot cod
 
 ### Faster Startup via Heap Snapshotting
 
-Parse configuration as with Jackson JSON 
+When a class is initialized at image build time its static fields are saved to the image heap in the generated executable. When the application starts up, this saved heap is mapped into memory. This can be (ab)used to, for example, parse and load a configuration or static data at image build time.
+In the `config-initialization` example, a big list of (fake!) employee accounts in the `JSON` format is parsed in the static initializer of `ConfigExample`. By initializing this class at build time, we avoid the overhead of parsing this configuration file at runtime.
 
+Data in this sample was generated using https://www.json-generator.com/.
 #### Context pre-initialization for GraalVM Languages
 
 Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the "Hello, World!" in JS more than 55% less expensive. With context pre-intialized we have `5,367,730` instructions executed
@@ -50,32 +57,37 @@ $ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 ## Hidden Dangers of Class Initialization
 
 ### Security vulnerabilities: private cryptographic keys, random seeds, etc.
-   (Algradin) Examples. 
 
-### Host machine data leakage
-
-### Correctness:
+Storing security-sensitive information such as private keys or having a PRNG in static fields of classes initialized at build time is a recipe for trouble. The keys in such classes would remain in the image executable, readily discoverable by Eve. PRNGs in static fields initialized with a random seed during the image build would always use the same seed, leading to the exact same sequence of numbers being generated in every application run.
 
 #### Read a property from a host machine but use it in production.
    (INet address)
-   
+### Host machine data leakage
+
+Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field.
+
+### Correctness:
+
 #### Regular code changes can cause unintended and unknown correctnes problems
 
 ### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
 #### Explicit changes in the config
   (Netty)(VJ) History of a file in Netty
 
-#### Unintended chages in the code 
+#### Unintended chages in the code
 
 
 
 ### Storing Caches Accidentaly in the Image
-   
+
 ### Cross-Library Boundaries
-   (gradinac) (Netty Find a good issue or Spring)
-   
+
+Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
+
 ### Initializing run-time classes at build time as a consequence of build-time initialization.
-    JSON at build time problem from features and rerun.
+
+Parsing the configuration during build time comes with a major caveat: in the `config-initialization` example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in class initialization configuration errors (classes from `jackson` that were supposed to be initialized at runtime got initialized at buildtime).
+Another consequence is that the image would have to be rebuilt if the underlying data changes.
 
 ### Image Bloating by Using Inadequate Data Structures
 
