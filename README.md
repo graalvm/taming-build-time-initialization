@@ -109,9 +109,9 @@ Every object can't be stored in the image heap. The major categories of objects 
 
 ### Properties for Run-Time Classes
 
-All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.)
+1. All sub-classes of a run-time class (or interface with default methods) must also be a runtime class. Otherwise, initialization of that class would also initialize the run-time class. (Inverse rule from the rule of build-time initialization.)
 
-Run-Time initialized classes must not end up in the image heap.
+2. Run-Time initialized classes must not end up in the image heap.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Hidden Dangers of Class Initialization
