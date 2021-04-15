@@ -2,10 +2,11 @@
 
 ## How to run the examples in this repo
 
-Make sure to install maven, GraalVM and native-image and to put native-image on the PATH.
+Make sure to install `maven`, GraalVM and native-image and to put native-image on the PATH.
 Each example can then be compiled using `mvn clean package`. Some examples can also be tweaked and recompiled to show different scenarios.
 
 ## Why Build-Time Initialization?
+
 ### Better Peak Performance
 
 By the semantics of the Java, access to classes, methods, or fields can cause class initialization. In just-in-time compilers (JIT) this doesn't introduce performance overheads: every class in the compiled code is initialized because the interpreter has already executed it.
@@ -26,6 +27,11 @@ The performance overhead of extra checks becomes particularly obvious in hot cod
 
 ### Smaller Output Binary and Less Configuration
 
+Class initialzers can pull a lot of unnecessary code into the resulting native-image. 
+
+Netty is currently initialized at build time. In the past this has caused many issues with cross-boundary initializations and initializing functionality at build time. 
+
+We made a PR to change initialization of Netty to run time and the results were dissapointing: the simplest Netty application grew from 16 MB to 20 MB in binary size.
 
 ### Faster Startup via Heap Snapshotting
 
@@ -33,6 +39,7 @@ When a class is initialized at image build time its static fields are saved to t
 In the `config-initialization` example, a big list of (fake!) employee accounts in the `JSON` format is parsed in the static initializer of `ConfigExample`. By initializing this class at build time, we avoid the overhead of parsing this configuration file at runtime.
 
 Data in this sample was generated using https://www.json-generator.com/.
+
 #### Context pre-initialization for GraalVM Languages
 
 Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the "Hello, World!" in JS more than 55% less expensive. With context pre-intialized we have `5,367,730` instructions executed
@@ -52,7 +59,16 @@ $ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 ==1729206== I   refs:      12,101,651
 ```
 
+The results are even better for Ruby where we have a reduction from 56 ms to 14 ms with the pre-initialized context. 
+
 ## Rules of Build-Time Initialization
+
+### Types of Classes in GraalVM Native Image
+
+### All Classes of Objects Stored in the Image Heap Must be Build-Time Initialized
+
+### Properties of Build-Time Classes
+
 
 ## Hidden Dangers of Class Initialization
 
@@ -62,9 +78,10 @@ Storing security-sensitive information such as private keys or having a PRNG in 
 
 #### Read a property from a host machine but use it in production.
    (INet address)
-### Host machine data leakage
+   
+### Host Machine Data Leakage
 
-Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field.
+Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field. However, contents of any file or directory structure that is saved into the image heap can fall into this category.
 
 ### Correctness:
 
@@ -74,9 +91,7 @@ Storing paths in static fields of classes initialized at build time can leak inf
 #### Explicit changes in the config
   (Netty)(VJ) History of a file in Netty
 
-#### Unintended chages in the code
-
-
+#### Unintended Chages in the Code Reachable from the Class Initializer
 
 ### Storing Caches Accidentaly in the Image
 
