@@ -89,7 +89,7 @@ In GraalVM Native Image there are three possible initialization states for each 
 
 The default for GraalVM Native Image is that classes are initialized at run time. However, for performance reasons, Native Image will prove certain classes safe to initialize and will still initialize them.
 
-#### Proving Safe Initialization During Analysis and after Analysis
+#### Proving Safe Initialization During Analysis and After Analysis
 GraalVM Native Image can prove classes safe in two places:
 1. During Analysis - all of the static fields will be folded during analysis and the resulting image size can be smaller. These proofs work on simple class initializers without recursion or cyclic dependencies.
 2. After Analysis - the fields will not have an effect on static analysis.
