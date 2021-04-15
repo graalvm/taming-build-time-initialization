@@ -108,8 +108,9 @@ Another consequence is that the image would have to be rebuilt if the underlying
 
 ## Build-Time Class Initialization Without Regret
 
-### Rewrite the code so the compiler can prove critical classes
+### Rewrite the Code so Native Image can Prove Critical Classes
 
-### Hand-pick classes that are important for build-time initialization but can't be proven
+### Hand-Pick Classes Important for Build-Time Initialization
 
 ## Debugging Class Initialization
+
