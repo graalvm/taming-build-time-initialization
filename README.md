@@ -46,7 +46,7 @@ Data in this sample was generated using https://www.json-generator.com/.
 
 #### Context pre-initialization for GraalVM Languages
 
-Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the "Hello, World!" in JS more than 55% less expensive. With context pre-intialized we have `5,367,730` instructions executed
+Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the `"Hello, World!"` in JS more than 55% less expensive. With context pre-intialized we have `5,367,730` instructions executed
 ```
 $ valgrind --tool=callgrind ../jre/bin/js -e 'print("Hello, World!")'
 ...
