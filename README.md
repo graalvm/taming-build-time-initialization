@@ -74,14 +74,22 @@ In GraalVM Native Image there are three possible initialization states for each 
 2. `RUN_TIME`   - marks that a class is initialized at run-time and all static fields and the class initializer will be evaluted at run time.
 3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time. 
 
-### Properties of Build-Time Classes
+### Properties of Build-Time Initialized Classes
+
+1. All classes stored in the image heap must be initialized at build time. This is necessary as accessing an object through a virtual method could execute code in that object doesn't have consistent state--static initializer has not been executed.
+2. All super classes, and super interfaces with default methods, of a build-time class must be build-time as well. 
+3. Code reached through the class initializer of a build time class, must be either marked as `BUILD_TIME` or `RERUN`. In the example of [JSON parsing at build time](https://github.com/vjovanov/taming-build-time-initalization/blob/main/why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ConfigExample.java#L20), most of the `jackson` library is initialized at build time.
 
 ### Proving a Class is Build-Time Initialized
 
+The default for GraalVM Native Image is that classes are initialized at run time. However, for performance reasons, Native Image will prove certain classes safe to initialize and will still initialize them.
+
 #### Proving Safe Initialization During Analysis and after Analysis
+Examples of obviously safe classes
 
 (TODO) clinit
 
+#### Notable excpetions 
 #### All Super Classes of a Build-Time class Must be Build-Time
 
 Notable exceptions are interfaces without default methods. Those are not initialized together with their sub-classes.
@@ -104,11 +112,12 @@ Storing security-sensitive information such as private keys or having a PRNG in 
 
 Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field. However, contents of any file or directory structure that is saved into the image heap can fall into this category.
 
-### Correctness:
+### Correctness
 
-#### Regular code changes can cause unintended and unknown correctnes problems
+#### Simple code changes can cause unintended and unknown correctnes problems
 
 ### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
+
 #### Explicit changes in the config
   (Netty)(VJ) History of a file in Netty
 
@@ -116,7 +125,7 @@ Storing paths in static fields of classes initialized at build time can leak inf
 
 ### Storing Caches Accidentaly in the Image
 
-### Cross-Library Boundaries
+### Crossing the Library Boundaries
 
 Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
 
