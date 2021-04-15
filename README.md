@@ -156,7 +156,7 @@ public class SecurityProblems {
     ...
 }
 ```
-Regardless of where the final image is executed, `USER_HOME` will always contain the `user.home` path on the original machine used to build the image. A basic check for these directories in the image heap is provided and can be enabled with `-H:+DetectUserDirectoriesInImageHeap`.
+Regardless of where the final image is executed, `USER_HOME` will always contain the `user.home` path on the original machined used to build the image. A basic check for these directories in the image heap is provided and can be enabled with `-H:+DetectUserDirectoriesInImageHeap`.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
@@ -165,7 +165,7 @@ Regardless of where the final image is executed, `USER_HOME` will always contain
 #### Read a Property from the Build Machine and Always use it in Production
 
 Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/net/InetAddress.java#L307) where the IP preference is determined in the class initializer:
-```java
+```
   static {
      String str = java.security.AccessController.doPrivileged(
                 new GetPropertyAction("java.net.preferIPv6Addresses"));
@@ -178,11 +178,20 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 ```
 
 #### Simple code changes can cause unintended and unknown correctnes problems
-   (Example)
+   If anywhere in the code that is reachable from static initializers we introduce reading a system property.
+   
+   The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization. 
+   
+   This especially doesn't play well when initialization is crossing the library boundaries.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
-### Backwards Compatibility
+#### Crossing the Library Boundaries
+
+Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+### Code Compatibility
 
 #### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
    (VJ) JSON Example
@@ -193,10 +202,6 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 #### Explicit Changes in the Configuration
   (Netty)(VJ) History of a file in Netty
 
-#### Crossing the Library Boundaries
-
-Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
-
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Initializing run-time classes at build time as a consequence of build-time initialization.
 
@@ -206,12 +211,7 @@ Another consequence is that the image would have to be rebuilt if the underlying
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Image Bloating by Using Inadequate Data Structures
 
-In the [config-initialization](why-build-time-initialization/config-initialization) example, the collections holding the parsed data will be written to the image heap in the executable. Such collections will introduce size overhead:
- - Size of the image with parsing the config at buildtime:    58 MB
- - Size of the image without parsing the config at buildtime: 30 MB
- - Size of the data file:                                     15 MB
--------------------------------------------------------------------
- - Total overhead:                                            13 MB
+In the [config-initialization](why-build-time-initialization/config-initialization) example, the size of the image without parsing the data file is 30 MB. Note that the size is a bit larger as we've included the file in the final image as a resource for practical reasons. The config file itself is 15 MB. By parsing the config file at build time and baking it into the image heap we get a 58 MB executable. This translates to a (58 - 30 - 15) MB = 13 MB overhead due to the used data structures that end up in the image heap - that is almost twice the size of the original data file!
 
 ## Build-Time Class Initialization Without Regret
 
