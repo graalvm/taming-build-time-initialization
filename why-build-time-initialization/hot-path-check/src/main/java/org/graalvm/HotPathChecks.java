@@ -1,10 +1,14 @@
 package org.graalvm;
 
 class SlowMath {
-    private static final boolean qSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
+    private static final boolean fastSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
+
+    private static boolean useFastSquareRoot() {
+        return fastSquareRoot;
+    }
 
     public static float rsqrt(float x) {
-        if (qSquareRoot) {
+        if (useFastSquareRoot()) {
             float xhalf = 0.5f * x;
             int i = Float.floatToIntBits(x);
             i = 0x5f3759df - (i >> 1); // evil floating point bit-level hacking. What the ***?
