@@ -249,11 +249,12 @@ io.netty.bootstrap.AbstractBootstrap, BUILD_TIME, from jar:file:///<path>/substr
 ...
 sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core.jdk.LocalizationFeature.addBundleToCache with 'class sun.util.resources.cldr.CalendarData'
   ```
-  
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>  
 ### Rewrite the Code so Native Image can Prove Critical Classes
  
  For this we will use the [example with the inverse square root decision](why-build-time-initialization/hot-path-check) made by the property. With a few slight changes we will make it possible to make the `SlowMath` class fast.
- 
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Hand-Pick Classes Important for Build-Time Initialization
 
 Sometimes proofs are impossible (e.g., Netty [PlatformDependent0](https://github.com/netty/netty/blob/4.1/common/src/main/java/io/netty/util/internal/PlatformDependent0.java#L77)) but we still need to initialize this class at build time. 
