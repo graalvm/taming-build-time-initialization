@@ -141,6 +141,17 @@ An entirely random sequence: 2843 5686 3435
 
 Storing paths in static fields of classes initialized at build time can leak information about the machine used to build the image. A prime example of this is storing `System.getProperty("user.home")` in a static field. However, contents of any file or directory structure that is saved into the image heap can fall into this category.
 
+In the [security-problems](hidden-build-time-initialization-dangers/security-problems) example, the following problematic field is initialized at image build time:
+```java
+public class SecurityProblems {
+   ...
+    // Will leak the user's home directory of the user building the image!
+    private static final String USER_HOME = System.getProperty("user.home");
+    ...
+}
+```
+Regardless of where the final image is executed, `USER_HOME` will always contain the `user.home` path on the original machined used to build the image. A basic check for these directories in the image heap is provided and can be enabled with `-H:+DetectUserDirectoriesInImageHeap`.
+
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Correctness
