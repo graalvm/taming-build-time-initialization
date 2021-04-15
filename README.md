@@ -69,6 +69,10 @@ The results are even better for Ruby where we have a reduction from `56 ms` to `
 ## Rules of Build-Time Initialization
 
 ### Types of Classes in GraalVM Native Image
+In GraalVM Native Image there are three possible initialization states for each class: 
+1. `BUILD_TIME` - marks that a class is initialized at build-time and all of static fields will be reachable saved in the image heap.
+2. `RUN_TIME`   - marks that a class is initialized at run-time and all static fields and the class initializer will be evaluted at run time.
+3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time. 
 
 ### Properties of Build-Time Classes
 
