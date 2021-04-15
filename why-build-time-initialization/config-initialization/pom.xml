@@ -121,7 +121,7 @@
             <buildArgs>
               <buildArg>--no-fallback</buildArg>
               <buildArg>-H:IncludeResources=account-list.json</buildArg>
-              <buildArg>--initialize-at-build-time=org.graalvm.ConfigExample</buildArg>
+              <buildArg>--initialize-at-build-time=org.graalvm.ConfigExample,com.fasterxml.jackson.core.io.SerializedString</buildArg>
             </buildArgs>
             <mainClass>org.graalvm.ConfigExample</mainClass>
           </configuration>
