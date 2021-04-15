@@ -156,7 +156,7 @@ public class SecurityProblems {
     ...
 }
 ```
-Regardless of where the final image is executed, `USER_HOME` will always contain the `user.home` path on the original machined used to build the image. A basic check for these directories in the image heap is provided and can be enabled with `-H:+DetectUserDirectoriesInImageHeap`.
+Regardless of where the final image is executed, `USER_HOME` will always contain the `user.home` path on the original machine used to build the image. A basic check for these directories in the image heap is provided and can be enabled with `-H:+DetectUserDirectoriesInImageHeap`.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
@@ -165,7 +165,7 @@ Regardless of where the final image is executed, `USER_HOME` will always contain
 #### Read a Property from the Build Machine and Always use it in Production
 
 Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/net/InetAddress.java#L307) where the IP preference is determined in the class initializer:
-```
+```java
   static {
      String str = java.security.AccessController.doPrivileged(
                 new GetPropertyAction("java.net.preferIPv6Addresses"));
