@@ -59,15 +59,21 @@ $ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 ==1729206== I   refs:      12,101,651
 ```
 
-The results are even better for Ruby where we have a reduction from 56 ms to 14 ms with the pre-initialized context. 
+The results are even better for Ruby where we have a reduction from `56 ms` to `14 ms` with the pre-initialized context. 
 
 ## Rules of Build-Time Initialization
 
 ### Types of Classes in GraalVM Native Image
 
-### All Classes of Objects Stored in the Image Heap Must be Build-Time Initialized
-
 ### Properties of Build-Time Classes
+
+#### All Super Classes of a Build-Time class Must be Build-Time
+
+Notable exceptions are interfaces without default methods. Those are not initialized together with their sub-classes.
+
+#### All Classes of Objects Stored in the Image Heap Must be Build-Time Initialized
+
+### Properties for Run-Time Classes
 
 
 ## Hidden Dangers of Class Initialization
