@@ -252,7 +252,7 @@ sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core
   
 ### Rewrite the Code so Native Image can Prove Critical Classes
  
- For this we will use our example with the inverse square root decision made by the property. With a few slight changes we will make it possible to make the `SlowMath` class fast.
+ For this we will use the [example with the inverse square root decision](why-build-time-initialization/hot-path-check) made by the property. With a few slight changes we will make it possible to make the `SlowMath` class fast.
  
 ### Hand-Pick Classes Important for Build-Time Initialization
 
