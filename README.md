@@ -194,6 +194,7 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
   (Netty)(VJ) History of a file in Netty
 
 #### Crossing the Library Boundaries
+
 Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
@@ -205,7 +206,12 @@ Another consequence is that the image would have to be rebuilt if the underlying
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Image Bloating by Using Inadequate Data Structures
 
-In the [config-initialization](why-build-time-initialization/config-initialization) example, the size of the image without parsing the data file is 30 MB. Note that the size is a bit larger as we've included the file in the final image as a resource for practical reasons. The config file itself is 15 MB. By parsing the config file at build time and baking it into the image heap we get a 58 MB executable. This translates to a (58 - 30 - 15) MB = 13 MB overhead due to the used data structures that end up in the image heap - that is almost twice the size of the original data file!
+In the [config-initialization](why-build-time-initialization/config-initialization) example, the collections holding the parsed data will be written to the image heap in the executable. Such collections will introduce size overhead:
+ - Size of the image with parsing the config at buildtime:    58 MB
+ - Size of the image without parsing the config at buildtime: 30 MB
+ - Size of the data file:                                     15 MB
+-------------------------------------------------------------------
+ - Total overhead:                                            13 MB
 
 ## Build-Time Class Initialization Without Regret
 
