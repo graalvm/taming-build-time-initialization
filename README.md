@@ -304,6 +304,7 @@ During image build-time, calls to `getLogger` will return a no-op logger and avo
 
 In the example, logging is configured using `logback.xml`. Initializing the logger at build-time would also unintentionally initialize XML parsing at build-time, creating an issue if XML is used elsewhere in the code.
 
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Debugging Class Initialization
 
 Two useful options for debugging class initialization problems are:
