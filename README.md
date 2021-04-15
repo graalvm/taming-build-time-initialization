@@ -206,17 +206,17 @@ If the underlying logging library is configurable by the user, buildtime initial
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Code Compatibility
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-#### Causing a class that was intialized at run-time to become build-time is a backwards incompatible change
-   (VJ) JSON Example
-   
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-#### Unintended Chages in the Code Reachable from the Class Initializer
-   (VJ)(algradin) example
+#### Making a class intialized at Run Time Stored in the Image Heap
+This can happen accross the library boundaries through values returned by regular functions.
+
+#### Changing a Class from Build Time to Run Time is a Backwards Incompatible Change
+
+1. Explicit changes in the configuration. See, for example, the [changes in Netty](https://github.com/netty/netty/blob/4.1/common/src/main/resources/META-INF/native-image/io.netty/common/native-image.properties) that occured over time. Each was a breaking change for the rest of the community.
+2. Adding code that can't be initialized at build-time anymore: e.g. dissallowed heap objects to build-time classes.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 #### Explicit Changes in the Configuration
-  (Netty)(VJ) History of a file in Netty
+  Marking something as initialized at build-time is one-way change.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization.
