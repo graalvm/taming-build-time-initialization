@@ -233,7 +233,7 @@ com.oracle.graal.compiler.enterprise.BulkAllocationSnippetTemplates, BUILD_TIME,
 com.oracle.svm.core.heap.Target_jdk_internal_ref_SoftCleanable, BUILD_TIME, substitutions are always initialized at build time
 com.oracle.svm.core.heap.Target_jdk_internal_ref_WeakCleanable, BUILD_TIME, substitutions are always initialized at build time
 ...
-io.netty.bootstrap.AbstractBootstrap, BUILD_TIME, from jar:file:///home/parallels/dev/g/ee/vm-enterprise/tests/native-image/netty/hello.world/target/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/common/native-image.properties (with 'io.netty.util.AbstractReferenceCounted') and from jar:file:///home/parallels/dev/g/ee/vm-enterprise/tests/native-image/netty/hello.world/target/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/codec-http/native-image.properties (with 'io.netty')
+io.netty.bootstrap.AbstractBootstrap, BUILD_TIME, from jar:file:///<path>/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/common/native-image.properties (with 'io.netty.util.AbstractReferenceCounted') and from jar:file:///<path>/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/codec-http/native-image.properties (with 'io.netty')
 ...
 sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core.jdk.LocalizationFeature.addBundleToCache with 'class sun.util.resources.cldr.CalendarData'
   ```
