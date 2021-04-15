@@ -205,7 +205,7 @@ Initializing classes at build time in one library can unintentionally ripple and
   (Netty)(VJ) History of a file in Netty
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-### Initializing run-time classes at build time as a consequence of build-time initialization.
+### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization.
 
 Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in class initialization configuration errors (classes from `jackson` that were supposed to be initialized at runtime got initialized at buildtime).
 Another consequence is that the image would have to be rebuilt if the underlying data changes.
