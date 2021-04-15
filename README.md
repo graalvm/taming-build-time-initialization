@@ -181,16 +181,27 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 
 #### Simple Code Changes can Cause Unintended and Unknown Correctnes Problems
    If anywhere in the code that is reachable from static initializers we introduce reading a system property.
-   
-   The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization. 
-   
+
+   The writer of the code can't know if the property will be used in the static initializer. For example, the writer of [ReadPropertyHolder](why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ReadPropertyHolder.java) does not know who could use this class in build-time initialization.
+
    This especially doesn't play well when initialization is crossing the library boundaries.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 #### Crossing the Library Boundaries
 
-Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries. A very common pattern in Java is to have a static final logging field. These loggers are created through factories, sometimes allowing users to configure which logging library to use. Should such a class be initialized at build time, any of the supported logging libraries could be initialized at build time, depending on the configuration.
+Initializing classes at build time in one library can unintentionally ripple and wrongly initialize classes in a different library. The most widespread example of cross-library initialization victims are logging libraries.
+
+Most Java frameworks have the following structure:
+```java
+public class MyBuildTimeInitClass {
+   ...
+   private static final Logger logger = MyFrameworkLogFactory.getLogger(MyBuildTimeInitClass.class);
+   ...
+}
+```
+
+If the underlying logging library is configurable by the user, buildtime initialization of the above class would wrongly initialize any of the selected logging library classes at build time.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Code Compatibility
