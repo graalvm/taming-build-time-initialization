@@ -239,33 +239,14 @@ sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core
   ```
   
 ### Rewrite the Code so Native Image can Prove Critical Classes
- (vojin) math example from the beginning.
-
+ 
+ For this we will use our example with the inverse square root decision made by the property. With a few slight changes we will make it possible to make the `SlowMath` class fast.
+ 
 ### Hand-Pick Classes Important for Build-Time Initialization
 
-A common problem in making a class safer for build-time initialization is logging. In the [avoiding-library-initialization](build-time-initialization-without-regret/avoiding-library-initialization) example, `AvoidingLibraryInitialization` could be initialized at build-time if it did not have a static logger.
+Sometimes proofs are impossible (e.g., Netty [PlatformDependent0](https://github.com/netty/netty/blob/4.1/common/src/main/java/io/netty/util/internal/PlatformDependent0.java#L77)) but we still need to initialize this class at build time. 
 
-To work around this, we refactor the logger creation to a utility method:
-```java
-    private static Logger getLogger() {
-        if ("buildtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
-            return NOPLogger.NOP_LOGGER;
-        } else {
-            return LoggerFactory.getLogger(AvoidingLibraryInitialization.class);
-        }
-    }
-```
-
-During image build-time, calls to `getLogger` will return a no-op logger and avoid initializing (and subesequently, configuring) logging at build-time. Native-image exposes the `org.graalvm.nativeimage.imagecode` system property that can contain:
- - `null`: code is executing on regular Java
- - `buildtime`: code is executing in the image builder
- - `runtime`: code is executing in the image, at runtime
-
-In the example, logging is configured using `logback.xml`. Initializing the logger at build-time would also unintentionally initialize XML parsing at build-time, creating an issue if XML is used elsewhere in the code.
-
-(vojin) text and explanation based on PlatformDependent0.
-All of the system properties we expose.
-After the change, the code should have equivalent semantics as the original and
+The soultion is simple, re-write the code of the class so it can be initialized at build-time. For that we can use the system properties injected by GraalVM Native Image.
 
 ## Debugging Class Initialization
 
