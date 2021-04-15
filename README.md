@@ -215,10 +215,6 @@ This can happen accross the library boundaries through values returned by regula
 2. Adding code that can't be initialized at build-time anymore: e.g. dissallowed heap objects to build-time classes.
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-#### Explicit Changes in the Configuration
-  Marking something as initialized at build-time is one-way change.
-
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization.
 
 Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in class initialization configuration errors (classes from `jackson` that were supposed to be initialized at runtime got initialized at buildtime).
