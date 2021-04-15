@@ -252,7 +252,24 @@ sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>  
 ### Rewrite the Code so Native Image can Prove Critical Classes
  
- For this we will use the [example with the inverse square root decision](why-build-time-initialization/hot-path-check) made by the property. With a few slight changes we will make it possible to make the `SlowMath` class fast.
+ For this we will use the [example with the inverse square root decision](why-build-time-initialization/hot-path-check) made by the property. By simply rewriting the code example
+ ```java
+ private static final boolean fastSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
+
+ private static boolean useFastSquareRoot() {
+     return fastSquareRoot;
+ }
+ ```
+ into 
+ ```java
+  private static class FastSquareRootHolder {
+     static final boolean fastSquareRoot = ReadPropertyHolder.useFastInverseSquareRoot();
+  }
+ ```
+ 
+ or by moving the property into a static inner class we make our code fast
+ 
+ a few slight changes we will make it possible to make the `SlowMath` class fast
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Hand-Pick Classes Important for Build-Time Initialization
