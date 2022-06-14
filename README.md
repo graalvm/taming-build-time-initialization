@@ -22,7 +22,6 @@ The performance overhead of extra checks becomes particularly obvious in hot cod
 
 The code example of a performance critical code where initialization is a problem can be found [here](why-build-time-initialization/hot-path-check).
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Smaller Binary and Less Configuration
 
@@ -30,7 +29,6 @@ Class initialzers can pull a lot of unnecessary code into the resulting native-i
 
 Netty is currently initialized at *build time*. In the past this has caused many issues with incorrect cross-library initializations. To address this issue we [made a PR](https://github.com/vjovanov/netty/pull/2/files) to change default initialization of Netty to run time but the results were somewhat dissapointing: the Netty `"Hello, World!"` application grew from **15 MB** to **20 MB** in binary size. The extra necessary config grew by more than **5x**--most of the reflection configuration happens in static initializers.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Faster Startup via Heap Snapshotting
 
@@ -44,7 +42,6 @@ In the [config-initialization](why-build-time-initialization/config-initializati
 
 Data in this sample was generated using https://www.json-generator.com/.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 #### Context pre-Initialization for GraalVM Languages
 
 Another good place to use heap snapshotting is pre-initialization of language contexts. For example, in GraalVM JS the frist context is initialized and stored into the javascript image. This makes the `"Hello, World!"` in JS more than 55% less expensive. With context pre-intialized we have `5,367,730` instructions executed
@@ -66,8 +63,6 @@ $ valgrind --tool=callgrind ../jre/bin/js-no-context -e 'print("Hello, World!")'
 
 The results are even better for Ruby where we have a reduction from `56 ms` to `14 ms` with the pre-initialized context.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-
 ## Rules of Build-Time Initialization and Heap Snapshotting
 
 ### Types of Classes in GraalVM Native Image
@@ -76,7 +71,6 @@ In GraalVM Native Image there are three possible initialization states for each 
 2. `RUN_TIME`   - marks that a class is initialized at run time and all static fields and the class initializer will be evaluted at run time.
 3. `RERUN`      - internal state that means `BUILD_TIME` by accident. Static fields and class initializers will be evaluated at run time.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Properties of Build-Time Initialized Classes
 
@@ -84,7 +78,6 @@ In GraalVM Native Image there are three possible initialization states for each 
 2. All super classes, and super interfaces with default methods, of a build-time class must be build-time as well.
 3. Code reached through the class initializer of a build time class, must be either marked as `BUILD_TIME` or `RERUN`. In the example of [JSON parsing at build time](https://github.com/vjovanov/taming-build-time-initalization/blob/main/why-build-time-initialization/config-initialization/src/main/java/org/graalvm/ConfigExample.java#L20), most of the `jackson` library is initialized at build time.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Proving a Class is Build-Time Initialized
 
@@ -97,7 +90,6 @@ GraalVM Native Image can prove classes safe in two places:
 
 The best place to see the types of classes that can be proven early is the [test for class initialization](https://github.com/oracle/graal/blob/master/substratevm/src/com.oracle.svm.test/src/com/oracle/svm/test/TestClassInitializationMustBeSafe.java).
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Limitations of Heap Snapshotting
 Every object can't be stored in the image heap. The major categories of objects are the ones that keep the state from the build machine:
@@ -106,7 +98,6 @@ Every object can't be stored in the image heap. The major categories of objects 
 3. Objects pointers to native memory (e.g., `java.nio.MappedByteBuffer`)
 4. Known random seeds (impossible to prove no random seed ends up in the image)
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Properties for Run-Time Classes
 
@@ -114,7 +105,6 @@ Every object can't be stored in the image heap. The major categories of objects 
 
 2. Run-Time initialized classes must not end up in the image heap.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Hidden Dangers of Class Initialization
 
 ### Security Vulnerabilities: Cryptographic Keys, Random Seeds, etc.
@@ -142,7 +132,6 @@ $ ./target/org.graalvm.securityproblems
 An entirely random sequence: 2843 5686 3435
 ```
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Host-Machine Data Leakage
 
@@ -159,7 +148,6 @@ public class SecurityProblems {
 ```
 Regardless of where the final image is executed, `USER_HOME` will always contain the `user.home` path on the original machined used to build the image. A basic check for these directories in the image heap is provided and can be enabled with `-H:+DetectUserDirectoriesInImageHeap`.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ### Correctness
 
@@ -179,7 +167,6 @@ Let us look at [INetAddress](https://github.com/openjdk/jdk/blob/master/src/java
 ```
 This was initialized at build-time in Native Image that caused a bug.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 #### Simple Code Changes can Cause Unintended and Unknown Correctness Problems
    If anywhere in the code that is reachable from static initializers we introduce reading a system property.
@@ -188,7 +175,6 @@ This was initialized at build-time in Native Image that caused a bug.
    
    This especially doesn't play well when initialization is crossing the library boundaries.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 #### Crossing the Library Boundaries
 
@@ -205,8 +191,15 @@ public class MyBuildTimeInitClass {
 
 If the underlying logging library is configurable by the user, buildtime initialization of the above class would wrongly initialize any of the selected logging library classes at build time.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Code Compatibility
+
+### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization.
+
+Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in:
+```java
+com.fasterxml.jackson.databind.SerializationConfig was unintentionally initialized at build time. To see why com.fasterxml.jackson.databind.SerializationConfig got initialized use --trace-class-initialization=com.fasterxml.jackson.databind.SerializationConfig
+com.fasterxml.jackson.annotation.JsonSetter$Value was unintentionally initialized at build time. To see why com.fasterxml.jackson.annotation.JsonSetter$Value got initialized use --trace-class-initialization=com.fasterxml.jackson.annotation.JsonSetter$Value
+```
 
 #### Making a class intialized at Run Time Stored in the Image Heap
 This can happen accross the library boundaries through values returned by regular functions (possibly written by a thrid party).
@@ -216,16 +209,6 @@ This can happen accross the library boundaries through values returned by regula
 1. Explicit changes in the configuration. See, for example, the [changes in Netty](https://github.com/netty/netty/blob/4.1/common/src/main/resources/META-INF/native-image/io.netty/common/native-image.properties) that occured over time. Each was a breaking change for the rest of the community.
 2. Modifying code so that it can't be initialized at build-time anymore: e.g. dissallowed heap objects stored to build-time classes.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization.
-
-Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in:
-```java
-com.fasterxml.jackson.databind.SerializationConfig was unintentionally initialized at build time. To see why com.fasterxml.jackson.databind.SerializationConfig got initialized use --trace-class-initialization=com.fasterxml.jackson.databind.SerializationConfig
-com.fasterxml.jackson.annotation.JsonSetter$Value was unintentionally initialized at build time. To see why com.fasterxml.jackson.annotation.JsonSetter$Value got initialized use --trace-class-initialization=com.fasterxml.jackson.annotation.JsonSetter$Value
-```
-
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Image Bloating by Using Inadequate Data Structures
 
 In the [config-initialization](why-build-time-initialization/config-initialization) example, the collections holding the parsed data will be written to the image heap in the executable. Such collections will introduce size overhead:
@@ -237,7 +220,6 @@ In the [config-initialization](why-build-time-initialization/config-initializati
 
 To fix this it is recommended to use lean data-structures (e.g., `EconomicMap` from Graal or trimmed `ArrayList`s).
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Build-Time Class Initialization Without Regret
 
 ### Inspecting the Results of Build-Time Initialization
@@ -255,8 +237,7 @@ com.oracle.svm.core.heap.Target_jdk_internal_ref_WeakCleanable, BUILD_TIME, subs
 io.netty.bootstrap.AbstractBootstrap, BUILD_TIME, from jar:file:///<path>/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/common/native-image.properties (with 'io.netty.util.AbstractReferenceCounted') and from jar:file:///<path>/substratevm-netty-hello-world-1.0.0-SNAPSHOT.jar!/META-INF/native-image/io.netty/codec-http/native-image.properties (with 'io.netty')
 ...
 sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core.jdk.LocalizationFeature.addBundleToCache with 'class sun.util.resources.cldr.CalendarData'
-  ```
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>  
+  ```  
 ### Rewrite the Code so Native Image can Prove Critical Classes
  
  For this we will use the [example with the inverse square root decision](why-build-time-initialization/hot-path-check) made by the property. By simply rewriting the code example
@@ -279,7 +260,6 @@ sun.util.calendar.ZoneInfoFile$Checksum, RERUN, from feature com.oracle.svm.core
  ```
  will make the code fast. 
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ### Hand-Pick Classes Important for Build-Time Initialization
 
 Sometimes proofs are impossible (e.g., Netty [PlatformDependent0](https://github.com/netty/netty/blob/4.1/common/src/main/java/io/netty/util/internal/PlatformDependent0.java#L77)) but we still need to initialize this class at build time. 
@@ -304,7 +284,6 @@ During image build-time, calls to `getLogger` will return a no-op logger and avo
 
 In the example, logging is configured using `logback.xml`. Initializing the logger at build-time would also unintentionally initialize XML parsing at build-time, creating an issue if XML is used elsewhere in the code.
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 ## Debugging Class Initialization
 
 Two useful options for debugging class initialization problems are:
