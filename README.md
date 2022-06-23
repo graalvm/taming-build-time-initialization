@@ -193,13 +193,15 @@ If the underlying logging library is configurable by the user, buildtime initial
 
 ### Code Compatibility
 
-### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization.
+### Initializing Run-Time Classes Unintentionally as a Consequence of Build-Time Initialization
 
 Parsing the configuration during build time comes with a major caveat: in the [config-initialization](why-build-time-initialization/config-initialization) example, the library used to parse the data, `jackson`, must not be referenced by any code at runtime. Doing so will result in:
 ```java
 com.fasterxml.jackson.databind.SerializationConfig was unintentionally initialized at build time. To see why com.fasterxml.jackson.databind.SerializationConfig got initialized use --trace-class-initialization=com.fasterxml.jackson.databind.SerializationConfig
 com.fasterxml.jackson.annotation.JsonSetter$Value was unintentionally initialized at build time. To see why com.fasterxml.jackson.annotation.JsonSetter$Value got initialized use --trace-class-initialization=com.fasterxml.jackson.annotation.JsonSetter$Value
 ```
+
+[The proposal for fixing this problem](PROPOSAL_CLASS_INITIALIZATION.md) is to allow classes initialized at build-time that are not marked with `--initialize-at-build-time`, to be used at runtime without affecting the state of the classes that were proven safe by the image builder.
 
 #### Making a class intialized at Run Time Stored in the Image Heap
 This can happen accross the library boundaries through values returned by regular functions (possibly written by a thrid party).
