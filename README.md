@@ -1,4 +1,4 @@
-# Taming Build-Time Initalization in Native Image
+# Taming Build-Time Initialization in Native Image
 
 ## Why Build-Time Initialization?
 
