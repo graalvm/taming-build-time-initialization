@@ -1,0 +1,5 @@
+{
+  "resources": [
+    { "pattern": "simple-reflect-config.json" }
+  ]
+}
