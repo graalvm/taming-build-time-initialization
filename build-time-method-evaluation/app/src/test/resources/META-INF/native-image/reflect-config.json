@@ -1,0 +1,7 @@
+[
+  {
+    "name": "org.graalvm.example.SimplifiedReflectConfig",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  }
+]

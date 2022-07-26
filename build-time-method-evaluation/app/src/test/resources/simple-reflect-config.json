@@ -1,0 +1,12 @@
+[
+  {
+    "name": "TypeX",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": false
+  },
+  {
+    "name": "TypeY",
+    "allDeclaredMethods": false,
+    "allDeclaredConstructors": true
+  }
+]
