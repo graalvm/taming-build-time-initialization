@@ -62,6 +62,8 @@ graalvmNative {
         test {
             // Enables evaluating methods marked with @Constant during the image build.
             buildArgs.add("-H:+UseExperimentalBuildTimeEvaluation")
+            // Allows all return types in @Constant methods. This can be changed for the restricted mode.
+            buildArgs.add("-H:-UseStrictBuildTimeEvaluation")
             // Allows any class to be initialized at image build time, as long as no object of such a class ends up in the image heap.
             // Note that this also currently disables automatically proving classes safe for build time initialization.
             buildArgs.add("-H:+UseNewExperimentalClassInitialization")
