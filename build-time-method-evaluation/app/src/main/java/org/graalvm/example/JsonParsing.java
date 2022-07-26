@@ -16,11 +16,14 @@ public class JsonParsing {
 
     @Constant
     public static List<SimplifiedReflectConfig> parseReflectJson(String json) throws JsonProcessingException {
+        if ("runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            System.err.println("This must be computed only at build time!");
+            System.exit(-1);
+        }
         return mapper.readValue(json, new TypeReference<>() {
         });
     }
 
-    @Constant
     public static List<SimplifiedReflectConfig> parseReflectJson(InputStream stream) throws IOException {
         return mapper.readValue(stream, new TypeReference<>() {
         });

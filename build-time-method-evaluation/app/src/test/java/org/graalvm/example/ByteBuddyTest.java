@@ -10,7 +10,7 @@ public class ByteBuddyTest {
     @Test
     public void testGreeting() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         Object greeter = ByteBuddyClassCreator.createGreeter();
-        System.out.println("Created a greeter! The greeter says: " + greeter.toString());
+        System.out.println("Created a greeter! The greeter says: " + greeter);
         Assertions.assertEquals(greeter.toString(), ByteBuddyClassCreator.GREETER_MESSAGE);
     }
 
