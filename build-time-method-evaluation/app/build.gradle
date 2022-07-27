@@ -76,6 +76,8 @@ graalvmNative {
             buildArgs.add("--initialize-at-build-time=net.bytebuddy.dynamic.loading.ByteArrayClassLoader")
             // Needed by the JsonParsingTest as this class ends up in the image heap.
             buildArgs.add("--initialize-at-build-time=org.graalvm.example.SimplifiedReflectConfig")
+            // Needed by the corner case tests
+            buildArgs.add("--initialize-at-build-time=org.graalvm.example.IntegerHolder")
         }
     }
 }
