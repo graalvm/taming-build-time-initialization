@@ -64,6 +64,7 @@ The new missing metadata exceptions will throw the corresponding error messages:
 As part of our effort to be fully Java-compliant, reflection, resource and serialization queries will now throw the correct exception at run time, even when the element triggered an exception at build time (e.g. a `LinkageError`).
 This behavior will only occur for elements present in the corresponding metadata. If that is not the case, Native Image will throw the appropriate `MissingMetadataException` instead.
 This means that, assuming both `QueriedClass` and `BackupClass` are included in the reflection metadata, the introductory example will now have the same behavior on HotSpot and Native Image.
+If the `--link-at-build-time` option is specified for the queried element, the `LinkageError` will instead be thrown immediately by the builder.
 
 ### Native Image agent modifications
 
