@@ -74,8 +74,8 @@ We define a *precomputed term* as one of the following:
 5. A `static final` field of a class that is initialized at build time with `--initialize-at-build-time`. 
 6. A function call to a `@Precompute`-annotated method that accepts only precomputed terms as arguments.
 7. An `Object#getClass()` call on a term whose type is known at build time. For example, `new Exception("Hi").getClass()` is a precomputed term.
-8. An array constructor whose inputs are only precoputed terms.
-9. A `final` variable that is assigned one of the above terms and can not be re-assigned before usage.
+8. An array constructor whose inputs are only precomputed terms.
+9. A `final` variable that is directly assigned a precomputed term.
 
 ## Storing (Reachability) Metadata in Data Structures
 
@@ -133,7 +133,7 @@ Removing `@Precompute` from a field or `@Pure` from a type is considered an API-
 
 Methods annotated with `@Precompute` are valid if and only if:
 1. The method return type is effectively immutable.
-2. The method is marked with `static`, or `final`, or it is a constructor of a `@Pure`-annotated record.
+2. The method is marked with `static` or `final`.
 
 A method annotated with `@Precompute` will be computed at link time and the result stored in the method body when all of its arguments (including the receiver) are precomputed terms.
 
