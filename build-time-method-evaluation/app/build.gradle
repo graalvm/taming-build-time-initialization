@@ -39,7 +39,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = 'org.graalvm.example.App'
+    mainClass = 'org.graalvm.example.safecomp.SafeComposition'
 }
 
 test {

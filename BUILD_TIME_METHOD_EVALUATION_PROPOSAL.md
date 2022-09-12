@@ -8,14 +8,14 @@ Before we continue, we state the following requirement that we call *safe compos
 
 Currently, there are three ways to compute reachability metadata in user code:
 
-1. Intrinsics for `java.lang.Class#forName` and methods on `java.lang.reflect.Field` and `java.lang.reflect.Method`. Given constant arguments method invocations will be computed in user code at build time. For example, `Class.forName("Foo")` will be computed at build time and, if class `Foo` is valid, it will be marked as reachable.  
+1. Intrinsics for `java.lang.Class#forName` and methods such as `Class#getMethod`, and similar. Given constant arguments method invocations will be computed in user code at build time. For example, `Class.forName("Foo")` will be computed at build time and, if class `Foo` is valid, it will be marked as reachable.  
 
 2. Inlining before analysis. This is the mechanism for inlining multiple levels of methods that the compiler can reduce to a constant.
 The problem with this approach is that it is hard to specify what a compiler can reduce to a constant. Because of that safe composition is not possible. For example, adding a logging statement to the following function breaks any usage of it at runtime (without externally specified metadata): 
 ```java
-public static Class<?> forSimpleName(String className) {
-    log("Class.forName call on my.package." + className); // prevents computation of reachability metadata
-    return Class.forName("my.package." + clazzName);
+public static Class<?> forSimpleName(String className) throws ClassNotFoundException {
+    System.out.println("Class.forName call on org.graalvm.example.safecomp." + className); // prevents inlining and computation of reachability metadata
+    return Class.forName("org.graalvm.example.safecomp." + className);
 }
 ```
 
@@ -60,7 +60,7 @@ public @interface Pure {
 ```
 
 Classes annotated with `@Pure` must follow these restrictions:
-1. All supertypes are also annotated with `@Pure`.
+1. All subtypes and super types are also annotated with @Pure.
 2. They do not have a static initializer.
 3. All fields of `@Pure` classes must be of pure type.
 
@@ -78,9 +78,12 @@ A precomputed term is one of the following:
 ## Storing (Reachability) Metadata in Data Structures
 
 We propose an annotation that can be used on fields:
+
 ```java
+import java.lang.annotation.ElementType;
+
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.TYPE_PARAMETER})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR})
 public @interface Precompute {
 }
 ```
@@ -104,7 +107,7 @@ Since `String` is an immutable type this is a correct usage of `@Precompute` on 
 
 However, if we mark the following field as `@Precompute`
 ```java
-@Precompute public static final Set<String> models = new HashSet<?>();
+@Precompute public static final Set<String> models = new HashSet<>();
 ```
 this would be incorrect as `Set` is not a `@Pure`-annotated type. To correct that we must define a data structure annotated with `@Pure`:
 ```java
@@ -116,14 +119,14 @@ class EconomicSet<@Pure T> {
 ```
 This structure can now be used for the precomputed set as follows:
 ```java
-@Precompute public static final EconomicSet<String> models = new EconomicSet<?>();
+@Precompute public static final EconomicSet<String> models = new EconomicSet<>();
 ```
 Program that uses the set with a type that is not pure would be again incorrect. For example,
 ```java
-@Precompute public static final EconomicSet<Object> models = new EconomicSet<?>();
+@Precompute public static final EconomicSet<Object> models = new EconomicSet<>();
 ```
 
-Removing the `@Precompute` from the field or `@Pure` from a type is considered an API-breaking change.
+Removing `@Precompute` from a field or `@Pure` from a type is considered an API-breaking change.
 
 ## Computing Reachability Metadata in Method Bodies
 
@@ -131,7 +134,7 @@ Methods annotated with `@Precompute` are valid if and only if:
 1. The method return type is effectively immutable.
 2. The method is marked with `static`, or `final`, or it is a constructor of a `@Pure`-annotated record.
 
-A method annotated with `@Precompute` will be computed at link time and the result stored in the method body when all of its arguments are constant including the receiver.
+A method annotated with `@Precompute` will be computed at link time and the result stored in the method body when all of its arguments (including the receiver) are precomputed terms.
 
 In case a `@Precompute`-annotated method throws an exception at build time, the invocation is replaced with a `throw` statement that will rethrow the same exception at runtime.
 
@@ -180,7 +183,7 @@ public @interface Propagate {
 
 This annotation can be placed only on method parameters and on a non-static method. A call to `@Propagate`-annotated method `m`:
 ```java
-final void m(@Propagate T1 p1, T2 p2, @Propagate p3) {
+final R m(@Propagate T1 p1, T2 p2, @Propagate T3 p3) {
     // body of m
 }
 
@@ -188,7 +191,7 @@ m(a1, a2, a3)
 ```
 is transformed as follows
 ```java
-final void m'(T2 p2) {
+final R m'(T2 p2) {
         var p1 = a1;
         var p3 = a3;
     // body of m
@@ -232,9 +235,9 @@ class Greeter {
 }
 ```
 
-### `@Propagate` with Known Types
+### `@Propagate` with Terms of Exact Types
 
-Propagate can be used for methods where the exact value of an argument is not known, but the type is determined.
+Propagate can be used for calls where the exact value of an argument is not known, but the type is determined.
 To demonstrate this we can use an example from Mockito for spying on objects:
 ```java
  public static <T> T spy(@Propagate T object) {
@@ -290,7 +293,7 @@ This feature should be used for legacy libraries and libraries that should do no
 The inlining before analysis would remain as is, however it would not be allowed to constant-fold reflective calls for purposes of computing reachability metadata. 
 All the metadata computation must be complete before inlining before analysis is done.
 
-All intrinsics for `Class#getField`, `Class#getMethod`, etc. would be implemented in terms of `@Propagate` and `@Precompute`.
+All intrinsics for `Class#getField`, `Class#getMethod`, etc., would be implemented in terms of `@Propagate` and `@Precompute`.
 
 ## Ensuring Correctness During Compilation 
 

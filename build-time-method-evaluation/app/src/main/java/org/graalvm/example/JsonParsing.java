@@ -3,7 +3,7 @@ package org.graalvm.example;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.graalvm.example.nativeimage.meta.Constant;
+import org.graalvm.example.nativeimage.meta.Precompute;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +14,7 @@ public class JsonParsing {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Constant
+    @Precompute
     public static List<SimplifiedReflectConfig> parseReflectJson(String json) throws JsonProcessingException {
         if ("runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
             System.err.println("This must be computed only at build time!");
