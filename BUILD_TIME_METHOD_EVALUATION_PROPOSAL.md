@@ -47,9 +47,9 @@ Note that some programs are dynamic in nature and the reachability metadata can'
 ## Types and Terms for Precomputing Metadata
 
 To allow precomputing metadata and making it available at runtime, it is necessary to introduce a restriction on types that can be precomputed. We introduce the following type definitions:
-1. *Immutable* types are all primitive types, boxed primitive types, `java.lang.String`, and records annotated with `@Pure`.
+1. *Immutable* types are all primitive types, boxed primitive types, `java.lang.String`, and `java.lang.Class`.
 2. *Effectively immutable* types are immutable types and `java.lang.reflect.Method` and `java.lang.reflect.Field`.
-3. *Pure* types are all effectively immutable types, classes annotated with `@Pure`, generic types annotated with `@Pure` and arrays of such types.
+3. *Pure* types are all effectively immutable types, final classes annotated with `@Pure`, generic types annotated with `@Pure` and arrays of such types.
 
 The `@Pure` annotation is defined as follows:
 ```java
@@ -60,20 +60,22 @@ public @interface Pure {
 ```
 
 Classes annotated with `@Pure` must follow these restrictions:
-1. All subtypes and super types are also annotated with @Pure.
-2. They do not have a static initializer.
+1. They do not have a static initializer.
+2. All supertypes must be annotated with `@Pure`.
 3. All fields of `@Pure` classes must be of pure type.
 
-A precomputed term is one of the following:
-1. A primitive literal or boxed primitive. For example, `1`, `new Integer(1)`, `1.0d`. 
+Note that `java.lang.Object` must be annotated with `@Pure`.
+
+We define a *precomputed term* as one of the following:
+1. A primitive literal or boxed primitive. For example, `1`, `new Integer(1)`, `1.0d`, etc. 
 2. String literals, e.g., `"s-literal"`.
 3. Class literals, e.g., `String.class`.
 4. A `static final` field annotated with `@Precompute`.
 5. A `static final` field of a class that is initialized at build time with `--initialize-at-build-time`. 
 6. A function call to a `@Precompute`-annotated method that accepts only precomputed terms as arguments.
 7. An `Object#getClass()` call on a term whose type is known at build time. For example, `new Exception("Hi").getClass()` is a precomputed term.
-8. An array constructor whose inputs are only above terms.
-9. A variable that is assigned one of the above terms and can not be re-assigned before usage.
+8. An array constructor whose inputs are only precoputed terms.
+9. A `final` variable that is assigned one of the above terms and can not be re-assigned before usage.
 
 ## Storing (Reachability) Metadata in Data Structures
 
@@ -83,15 +85,14 @@ We propose an annotation that can be used on fields:
 import java.lang.annotation.ElementType;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Target({ElementType.FIELD, ElementType.METHOD})
 public @interface Precompute {
 }
 ```
  
 When a field is annotated with `@Precompute` the following must apply:
 1) The field must be `static final`.
-2) The field type must be of pure type.
-3) (Discussion point) The field's computation can only depend on precomputed terms.
+2) The field must be of pure type.
 
 The precomputed field is computed by analysing the dataflow of the `<clinit>` method and extracting the code required to execute for the computation of such field in a separate methods. 
 These methods would be then executed at link-time and the result would be stored in the field. The transformation would be done by a bytecode-to-bytecode transformation.
@@ -100,7 +101,7 @@ An example of a `@Precompute`-e annotated fields
 ```java
 class Greeter {
     public static final String HELLO_FIRST_CLASS_WORLD = "Hello, First " + Class.class.getSimpleName() + " World!"; // computed at runtime 
-    @Precompute public static final String HELLO_SECOND_CLASS_WORLD = "Hello, Second " + Class.class.getSimpleName() + " World!"; // initialized at link time
+    @Precompute public static final String HELLO_SECOND_CLASS_WORLD = "Hello, Second " + Class.class.getSimpleName() + " World!"; // computed at link time
 }
 ```
 Since `String` is an immutable type this is a correct usage of `@Precompute` on fields. 
@@ -109,21 +110,21 @@ However, if we mark the following field as `@Precompute`
 ```java
 @Precompute public static final Set<String> models = new HashSet<>();
 ```
-this would be incorrect as `Set` is not a `@Pure`-annotated type. To correct that we must define a data structure annotated with `@Pure`:
+this would be incorrect as `Set` is not a final `@Pure`-annotated type. To correct that we must define a data structure annotated with `@Pure`:
 ```java
 @Pure
-class EconomicSet<@Pure T> {
+final class ImageSet<@Pure T> implements Set<T> {
     private T[] entries;
     // ...
 }
 ```
 This structure can now be used for the precomputed set as follows:
 ```java
-@Precompute public static final EconomicSet<String> models = new EconomicSet<>();
+@Precompute public static final ImageSet<String> models = new ImageSet<>();
 ```
 Program that uses the set with a type that is not pure would be again incorrect. For example,
 ```java
-@Precompute public static final EconomicSet<Object> models = new EconomicSet<>();
+@Precompute public static final ImageSet<Object> models = new ImageSet<>();
 ```
 
 Removing `@Precompute` from a field or `@Pure` from a type is considered an API-breaking change.
