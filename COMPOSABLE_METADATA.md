@@ -11,6 +11,7 @@ Because of this adding new metadata makes more elements reachable and can change
    We must require that all reflective methods on `java.lang.Class` require a metadata entry and that they: either return all elements when the metadata entry is present, or throw a missing-metadata exception when there is no metadata entry.
 
 2. *For resource metadata* that can currently contain exclude patterns. An added exclude pattern can accidentally remove resources from the image and break the functionality of a working program.
+    
     We must require that exclude patterns are regarded only within the scope of a single `resource-config.json` file.
 
 
