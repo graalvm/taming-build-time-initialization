@@ -2,7 +2,7 @@
 
 This document describes a mechanism for computing [reachability metadata](https://www.graalvm.org/22.2/reference-manual/native-image/metadata/) in user code at build time.
 We focus on computing reachability metadata in the user code as it is easier to maintain compared to externally specified metadata (e.g., in JSON files).
-Nonetheless, this mechanism can be used for precomputing arbitrary complex data structures such as ML-models and parsed configuration files.  
+Nonetheless, this mechanism can be used for precomputing complex data structures such as ML-models and parsed configuration files.  
 
 Before we continue, we state the following requirement that we call *safe composition*: Syntactically and semantically correct changes to a method's body must not break compilation or execution of any program that is using that method.
 
