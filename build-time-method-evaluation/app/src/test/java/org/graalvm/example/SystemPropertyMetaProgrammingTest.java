@@ -1,13 +1,13 @@
 package org.graalvm.example;
 
-import org.graalvm.example.nativeimage.meta.Constant;
+import org.graalvm.example.nativeimage.meta.Precompute;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class SystemPropertyMetaProgrammingTest {
 
-    @Constant
+    @Precompute
     public static Boolean getBooleanPropertyAtBuildTime(String property) {
         return Boolean.getBoolean(property);
     }
@@ -24,7 +24,7 @@ public class SystemPropertyMetaProgrammingTest {
 
     static final boolean REMOVE_UNREACHABLE_CLASS = getBooleanPropertyAtBuildTime("remove.UnreachableClass");
 
-    @Constant
+    @Precompute
     static boolean getRemoveUnreachableClass() {
         return REMOVE_UNREACHABLE_CLASS;
     }
